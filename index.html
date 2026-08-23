@@ -52,13 +52,30 @@
           </button>
         </nav>
 
+        <!-- Version Mode Toggle -->
+        <div class="version-toggle" role="group" aria-label="Version Mode">
+          <button class="version-btn active" data-version="v1" id="btn-v1" title="V1 Digital: PC to PC perfect lossless via SVG/PNG. All palettes.">
+            ⚡ V1 — Digital
+          </button>
+          <button class="version-btn" data-version="v2" id="btn-v2" title="V2 Paper: Phase 2 — EUV / photo-grade printers & adaptive CIELAB calibration.">
+            🖨️ V2 — Paper
+          </button>
+        </div>
+
         <!-- Language Selector -->
         <select id="lang-selector" class="lang-select" title="Switch Language / Cambiar Idioma">
-          <option value="en" selected>🇺🇸 English (EN)</option>
-          <option value="es">🇪🇸 Español (ES)</option>
+          <option value="en" selected>🇺🇸 EN</option>
+          <option value="es">🇪🇸 ES</option>
         </select>
       </div>
     </header>
+
+    <!-- V2 Warning Banner (hidden by default) -->
+    <div id="v2-warning-banner" class="v2-banner" style="display:none;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span data-i18n="mode.v2.warning">⚠️ V2 Paper Mode is Phase 2. Palettes are currently optimized for digital. EUV or photo-grade printers recommended.</span>
+      <span class="v2-badge-pill">Phase 2 · EUV Ready</span>
+    </div>
 
     <!-- Main Content Area -->
     <main class="app-main">
@@ -75,13 +92,22 @@
 
             <!-- Medium Presets -->
             <div class="form-group">
-              <label for="preset-selector" data-i18n="studio.preset.label">🎯 Target Medium & Reliability Preset</label>
+              <label for="preset-selector" data-i18n="studio.preset.label">🎯 Encoding Preset</label>
               <select id="preset-selector" style="font-weight: 600; color: var(--accent-cyan);">
-                <option value="preset-sticker" data-i18n="preset.sticker" selected>🏷️ Outdoor UV Ink & Sticker Tag (Heavy-Duty 35% ECC)</option>
-                <option value="preset-backup" data-i18n="preset.backup">📄 Paper Cold Storage Backup (Standard 25% ECC)</option>
-                <option value="preset-fastphone" data-i18n="preset.fastphone">📱 Fast Mobile Phone Scan (High Speed 16-Color)</option>
-                <option value="preset-density" data-i18n="preset.density">💾 Maximum Density (ASCII-95 / 1 Dot = 1 Char)</option>
-                <option value="preset-custom" data-i18n="preset.custom">⚙️ Custom Manual Configuration...</option>
+                <optgroup label="⚡ V1 — Digital (PC → PC, Perfect)" id="optgroup-v1">
+                  <option value="v1-perfect">⚡ [V1] PC → PC Perfect · PALETTE_256 · 8 bits/dot · Zero-loss</option>
+                  <option value="v1-high">⚡ [V1] PC → PC High Density · PALETTE_64 · 6 bits/dot · Base64</option>
+                  <option value="v1-balanced" selected>⚡ [V1] PC → PC Balanced · PALETTE_16 · 4 bits/dot · 1 Nibble</option>
+                  <option value="v1-text">⚡ [V1] PC → PC Plain Text · ASCII-95 · 1 dot = 1 char</option>
+                </optgroup>
+                <optgroup label="🖨️ V2 — Paper / Physical (Phase 2)" id="optgroup-v2">
+                  <option value="v2-euv">🖨️ [V2] EUV / Photo Printer · PALETTE_16 · 0.5mm — Phase 2</option>
+                  <option value="v2-phone">🖨️ [V2] Any Printer + Phone · PALETTE_8 · 1.0mm — Phase 2</option>
+                  <option value="v2-sticker">🖨️ [V2] UV Sticker · PALETTE_8 · 0.9mm · 35% ECC — Phase 2</option>
+                </optgroup>
+                <optgroup label="⚙️ Manual">
+                  <option value="preset-custom">⚙️ Custom Manual Configuration...</option>
+                </optgroup>
               </select>
             </div>
 
