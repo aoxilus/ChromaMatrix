@@ -258,7 +258,8 @@ export function decodeChromaMatrix(imageData, options = {}) {
   }
 
   const span = Math.hypot(corners[1].x - corners[0].x, corners[1].y - corners[0].y);
-  const res = options.rectifyResolution || Math.max(800, Math.min(2400, Math.round(span)));
+  // Adaptive resolution: ensure at least 6-10 pixels per cell even for 200x200 grids
+  const res = options.rectifyResolution || Math.max(1200, Math.min(3200, Math.round(span)));
   const rectified = rectifyMatrix(imageData, corners, res);
 
   const candidateGridSizes = options.gridSize
@@ -270,6 +271,7 @@ export function decodeChromaMatrix(imageData, options = {}) {
   for (const testGridSize of candidateGridSizes) {
     try {
       const cellSize = res / testGridSize;
+      const sampleRadius = Math.max(1, Math.min(3, Math.floor(cellSize * 0.22)));
 
       const getCellCenter = (gx, gy) => ({
         cx: (gx + 0.5) * cellSize,
@@ -277,15 +279,15 @@ export function decodeChromaMatrix(imageData, options = {}) {
       });
 
       // Sample Paper White and Black references
-      const blackRefSample = sampleCellMedian(rectified, 3.5 * cellSize, 3.5 * cellSize, 2);
-      const paperWhiteSample = sampleCellMedian(rectified, 1.5 * cellSize, 1.5 * cellSize, 2);
+      const blackRefSample = sampleCellMedian(rectified, 3.5 * cellSize, 3.5 * cellSize, sampleRadius);
+      const paperWhiteSample = sampleCellMedian(rectified, 1.5 * cellSize, 1.5 * cellSize, sampleRadius);
 
       // Header coordinates
       const headerCoords = getHeaderCoordinates(testGridSize);
       const headerSymbols = [];
       for (const coord of headerCoords) {
         const { cx, cy } = getCellCenter(coord.x, coord.y);
-        const rawRgb = sampleCellMedian(rectified, cx, cy, 2);
+        const rawRgb = sampleCellMedian(rectified, cx, cy, sampleRadius);
         const normRgb = normalizeWhiteBalance(rawRgb, paperWhiteSample, blackRefSample);
         const classified = classifyColor(normRgb, PALETTE_MODES.PALETTE_16);
         headerSymbols.push(classified.index);
@@ -372,7 +374,7 @@ export function decodeChromaMatrix(imageData, options = {}) {
       for (let i = 0; i < calibCoords.length && i < calibColors.length; i++) {
         const cCoord = calibCoords[i];
         const { cx, cy } = getCellCenter(cCoord.x, cCoord.y);
-        const rgb = sampleCellMedian(rectified, cx, cy, 2);
+        const rgb = sampleCellMedian(rectified, cx, cy, sampleRadius);
         const normRgb = normalizeWhiteBalance(rgb, paperWhiteSample, blackRefSample);
         const lab = rgbToLab(normRgb.r, normRgb.g, normRgb.b);
 
@@ -391,7 +393,7 @@ export function decodeChromaMatrix(imageData, options = {}) {
         for (let gx = 0; gx < gridSize; gx++) {
           if (!isCellReserved(gx, gy, gridSize, calibColors.length)) {
             const { cx, cy } = getCellCenter(gx, gy);
-            const rawRgb = sampleCellMedian(rectified, cx, cy, 2);
+            const rawRgb = sampleCellMedian(rectified, cx, cy, sampleRadius);
             const normRgb = normalizeWhiteBalance(rawRgb, paperWhiteSample, blackRefSample);
 
             const match = classifyColor(normRgb, mode, calibratedSwatches);

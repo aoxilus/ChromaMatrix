@@ -714,8 +714,7 @@ async function runDecoder() {
   if (!state.decoder.sourceImage || !state.decoder.corners) return;
 
   const result = decodeChromaMatrix(state.decoder.sourceImage, {
-    corners: state.decoder.corners,
-    rectifyResolution: 600
+    corners: state.decoder.corners
   });
 
   if (result.success) {
