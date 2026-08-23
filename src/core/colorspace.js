@@ -1,6 +1,8 @@
 /**
  * ChromaMatrix - Color Space & Metrics Module
  * Provides sRGB <-> CIEXYZ <-> CIELAB conversions and CIE76 / CIEDE2000 color difference metrics.
+ * 
+ * 🥑 by aoxilus (https://github.com/aoxilus) · CC BY-NC-SA 4.0 (Attribution-NonCommercial-ShareAlike)
  */
 
 // D65 Standard Illuminant reference white point

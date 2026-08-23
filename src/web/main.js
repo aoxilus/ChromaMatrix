@@ -2,6 +2,8 @@
  * ChromaMatrix - Main Web Application Controller
  * Connects Encoder Studio (with AES-256-GCM Encryption), Vision Decoder,
  * Sheet Capacity Report, Fidelity Benchmark, and Theory Visualizer.
+ * 
+ * 🥑 by aoxilus (https://github.com/aoxilus) · CC BY-NC-SA 4.0 (Attribution-NonCommercial-ShareAlike)
  */
 
 import {

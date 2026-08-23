@@ -2,6 +2,8 @@
  * ChromaMatrix - Optical Color-Dot 2D Matrix Encoder
  * Generates print-ready color dot matrices with QR-style alignment markers,
  * timing tracks, color calibration swatches, and Reed-Solomon ECC payload.
+ * 
+ * 🥑 by aoxilus (https://github.com/aoxilus) · CC BY-NC-SA 4.0 (Attribution-NonCommercial-ShareAlike)
  */
 
 import { PALETTE_MODES, getPalette } from './palette.js';

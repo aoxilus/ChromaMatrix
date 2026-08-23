@@ -2,6 +2,8 @@
  * ChromaMatrix - Paper Capacity & Full-Sheet Layout Engine
  * Calculates physical printable capacity (Letter / A4) across optical dot sizes,
  * printer DPI, and scanner/camera capture distances.
+ * 
+ * 🥑 by aoxilus (https://github.com/aoxilus) · CC BY-NC-SA 4.0 (Attribution-NonCommercial-ShareAlike)
  */
 
 import { PALETTE_MODES } from './palette.js';

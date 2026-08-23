@@ -2,6 +2,8 @@
  * ChromaMatrix - Reed-Solomon Error Correction Code (RS-ECC)
  * Galois Field GF(2^8) with primitive polynomial 0x11D (x^8 + x^4 + x^3 + x^2 + 1).
  * Standard polynomial representation (highest degree at index 0).
+ * 
+ * 🥑 by aoxilus (https://github.com/aoxilus) · CC BY-NC-SA 4.0 (Attribution-NonCommercial-ShareAlike)
  */
 
 const PRIMITIVE_POLYNOMIAL = 0x11d;

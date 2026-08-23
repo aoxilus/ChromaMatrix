@@ -2,6 +2,8 @@
  * ChromaMatrix - Printer & Scanner Color Fidelity Benchmark Engine
  * Generates calibration test target sheets, analyzes scanned photos,
  * calculates printer gamut shift, confusion matrices, and recommends optimal palettes.
+ * 
+ * 🥑 by aoxilus (https://github.com/aoxilus) · CC BY-NC-SA 4.0 (Attribution-NonCommercial-ShareAlike)
  */
 
 import { rgbToLab, deltaE2000, rgbToHex, normalizeWhiteBalance } from './colorspace.js';

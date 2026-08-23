@@ -2,6 +2,8 @@
  * ChromaMatrix - Computer Vision & Optical Decoder Engine
  * Detects corner markers, applies perspective homography unwarping,
  * samples calibration swatches, classifies dot colors, and performs RS-ECC recovery.
+ * 
+ * 🥑 by aoxilus (https://github.com/aoxilus) · CC BY-NC-SA 4.0 (Attribution-NonCommercial-ShareAlike)
  */
 
 import { PALETTE_MODES, getPalette, classifyColor } from './palette.js';

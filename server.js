@@ -1,6 +1,8 @@
 /**
  * ChromaMatrix - Local Web Application Server
  * Serves the web interface and core ES modules
+ * 
+ * 🥑 by aoxilus (https://github.com/aoxilus) · CC BY-NC-SA 4.0 (Attribution-NonCommercial-ShareAlike)
  */
 
 import http from 'http';

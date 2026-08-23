@@ -2,6 +2,8 @@
  * ChromaMatrix - Color Palette Definition & Color Matching Engine
  * Defines standard calibrated palettes (8, 16, 64, ASCII-95, 256 colors)
  * ensuring pure Black and White are reserved strictly for alignment markers.
+ * 
+ * 🥑 by aoxilus (https://github.com/aoxilus) · CC BY-NC-SA 4.0 (Attribution-NonCommercial-ShareAlike)
  */
 
 import { rgbToLab, deltaE2000, rgbToHex } from './colorspace.js';

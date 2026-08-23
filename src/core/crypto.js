@@ -2,6 +2,8 @@
  * ChromaMatrix - AES-256-GCM Isomorphic Encryption & Decryption Module
  * Supports password-based key derivation (PBKDF2-SHA256) and authenticated AES-GCM encryption
  * Compatible with modern Web Crypto API and Node.js.
+ * 
+ * 🥑 by aoxilus (https://github.com/aoxilus) · CC BY-NC-SA 4.0 (Attribution-NonCommercial-ShareAlike)
  */
 
 // Magic prefix identifying encrypted ChromaMatrix payload
