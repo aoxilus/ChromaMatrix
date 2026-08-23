@@ -1,0 +1,31 @@
+{
+  "name": "chromamatrix",
+  "version": "1.0.0",
+  "description": "Paper data storage via color dots, calibration, printer-scanner color benchmark & decoder in Node.js",
+  "main": "src/core/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node test/run-all.js",
+    "encode": "node src/cli/encode-cli.js",
+    "decode": "node src/cli/decode-cli.js",
+    "benchmark": "node src/cli/benchmark-cli.js"
+  },
+  "keywords": [
+    "color-barcode",
+    "optical-data",
+    "color-matrix",
+    "reed-solomon",
+    "cielab",
+    "color-calibration",
+    "printer-scanner-benchmark",
+    "computer-vision"
+  ],
+  "author": "aoxilus (https://github.com/aoxilus)",
+  "license": "CC-BY-NC-SA-4.0",
+  "dependencies": {
+    "pngjs": "^7.0.0"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChromaMatrix - Offline Optical Color-Dot Paper & Sticker Data Storage</title>
+  <meta name="description" content="High-density color-dot optical storage for paper cold backups, UV ink printing, outdoor sticker tags, and 100% offline smartphone scanning with Reed-Solomon error correction and CIELAB color calibration.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/web/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <div class="color-dot dot-red"></div>
+          <div class="color-dot dot-green"></div>
+          <div class="color-dot dot-blue"></div>
+          <div class="color-dot dot-yellow"></div>
+        </div>
+        <div class="brand-text">
+          <h1>ChromaMatrix</h1>
+          <span class="badge">Offline Paper & UV Sticker Optical Data</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs" role="tablist">
+        <button class="tab-btn active" data-tab="studio" id="tab-btn-studio">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg>
+          Matrix Studio (Encoder)
+        </button>
+        <button class="tab-btn" data-tab="decoder" id="tab-btn-decoder">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Scan & Decode (Instant)
+        </button>
+        <button class="tab-btn" data-tab="capacity" id="tab-btn-capacity">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Sheet Capacity Report
+        </button>
+        <button class="tab-btn" data-tab="benchmark" id="tab-btn-benchmark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/><path d="M12 3v12"/><path d="M20 21H4"/></svg>
+          Printer & Ink Lab
+        </button>
+        <button class="tab-btn" data-tab="theory" id="tab-btn-theory">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          Color Science
+        </button>
+      </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+
+      <!-- TAB 1: MATRIX STUDIO (ENCODER) -->
+      <section class="tab-panel active" id="tab-studio">
+        <div class="panel-layout">
+          <!-- Left Controls Column -->
+          <div class="card control-card">
+            <div class="card-header">
+              <h2>Optical Data Matrix Generator</h2>
+              <span class="subtitle">Direct color-dot encoding for offline paper backups, UV ink printing & physical sticker tags</span>
+            </div>
+
+            <!-- Medium Presets -->
+            <div class="form-group">
+              <label for="preset-selector">🎯 Target Medium & Reliability Preset</label>
+              <select id="preset-selector" style="font-weight: 600; color: var(--accent-cyan);">
+                <option value="preset-sticker" selected>🏷️ Outdoor UV Ink & Sticker Tag (Heavy-Duty 35% ECC)</option>
+                <option value="preset-backup">📄 Paper Cold Storage Backup (Standard 25% ECC)</option>
+                <option value="preset-fastphone">📱 Fast Mobile Phone Scan (High Speed 16-Color)</option>
+                <option value="preset-density">💾 Maximum Density (ASCII-95 / 1 Dot = 1 Char)</option>
+                <option value="preset-custom">⚙️ Custom Manual Configuration...</option>
+              </select>
+            </div>
+
+            <!-- Input Text / File Area -->
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label for="input-text" style="margin-bottom: 0;">Payload Data (Text / Keys / Seed Phrase / Manual)</label>
+                <button class="link-btn" id="btn-upload-file-encoder" style="font-size: 0.78rem;">Upload File...</button>
+                <input type="file" id="file-input-encoder" style="display:none">
+              </div>
+              <textarea id="input-text" rows="4" placeholder="Type or paste emergency data, recovery keys, offline manual, or backup text...">ChromaMatrix Offline Data: Zero internet required. Direct optical color-dot storage on UV stickers and paper cold backups with Reed-Solomon self-healing.</textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="palette-mode">Color Palette Mode</label>
+                <select id="palette-mode">
+                  <option value="PALETTE_16" selected>16 Colors (4 bits/dot - 1 Nibble) - Recommended</option>
+                  <option value="PALETTE_8">8 Colors (3 bits/dot) - Maximum Outdoor Contrast</option>
+                  <option value="ASCII_95">ASCII-95 (1 Dot = 1 Exact ASCII Character)</option>
+                  <option value="PALETTE_64">64 Colors (6 bits/dot - Base64)</option>
+                  <option value="PALETTE_256">256 Colors (8 bits/dot - High Density Scan)</option>
+                </select>
+              </div>
+
+              <div class="form-group flex-1">
+                <label for="ecc-level">Error Correction (RS-ECC)</label>
+                <select id="ecc-level">
+                  <option value="0.15">15% ECC (High Cleanliness)</option>
+                  <option value="0.25">25% ECC (Standard Paper Backup)</option>
+                  <option value="0.35" selected>35% ECC (Heavy-Duty UV / Stickers)</option>
+                  <option value="0.50">50% ECC (Maximum Scratch Resilience)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="dot-shape">Dot Geometry</label>
+                <select id="dot-shape">
+                  <option value="circle" selected>Circular Dots (Anti-Bleed UV)</option>
+                  <option value="rounded">Rounded Squares</option>
+                  <option value="square">Solid Squares</option>
+                </select>
+              </div>
+
+              <div class="form-group flex-1">
+                <label for="cell-size">Dot Render Size (px)</label>
+                <input type="range" id="cell-size" min="10" max="32" value="18">
+                <span class="range-val" id="cell-size-val">18 px</span>
+              </div>
+            </div>
+
+            <!-- Active Palette Swatches Preview -->
+            <div class="form-group">
+              <label>Calibrated Palette Swatches (Black & White reserved for alignment)</label>
+              <div class="palette-swatch-bar" id="studio-palette-bar"></div>
+            </div>
+
+            <!-- Statistics Box -->
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-label">Grid Size</span>
+                <span class="stat-val" id="stat-grid-size">29 x 29</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Data Payload</span>
+                <span class="stat-val" id="stat-payload-len">146 B</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">RS Codewords</span>
+                <span class="stat-val" id="stat-codeword-len">196 B</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Data Dots</span>
+                <span class="stat-val" id="stat-dot-count">392 dots</span>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+              <button class="btn btn-primary" id="btn-download-png">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download PNG
+              </button>
+              <button class="btn btn-secondary" id="btn-download-svg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download SVG
+              </button>
+              <button class="btn btn-secondary" id="btn-open-newtab" title="Open full-resolution image in new browser tab">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Open in Tab
+              </button>
+              <button class="btn btn-secondary" id="btn-copy-image" title="Copy matrix image to clipboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy Image
+              </button>
+              <button class="btn btn-accent" id="btn-print-sheet">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Target Sheet
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Preview Column -->
+          <div class="card preview-card">
+            <div class="card-header">
+              <h2>Matrix Visualizer & Dot Inspector</h2>
+              <span class="subtitle">Direct optical matrix preview with on-sheet calibration swatches and finder marks</span>
+            </div>
+
+            <div class="preview-stage" id="matrix-preview-stage">
+              <div class="matrix-canvas-wrapper" id="matrix-canvas-wrapper">
+                <!-- SVG rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Dot Inspector Detail Card -->
+            <div class="inspector-card" id="dot-inspector">
+              <div class="inspector-color-chip" id="chip-color"></div>
+              <div class="inspector-details">
+                <div class="inspector-title" id="chip-title">Cell Info: Hover over a dot</div>
+                <div class="inspector-coords" id="chip-coords">Coord: (x, y) | Type: DATA</div>
+                <div class="inspector-color-data" id="chip-color-info">RGB: (255, 255, 255) | LAB: L*50 a*0 b*0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: SCAN & DECODE (INSTANT CAMERA / PHOTO) -->
+      <section class="tab-panel" id="tab-decoder">
+        <div class="panel-layout">
+          <!-- Left Column: Source Upload / Webcam -->
+          <div class="card control-card">
+            <div class="card-header">
+              <h2>Optical Capture & Instant Reader</h2>
+              <span class="subtitle">100% offline computer vision decoding. No internet or passwords needed.</span>
+            </div>
+
+            <div class="input-mode-toggles">
+              <button class="toggle-btn active" id="btn-mode-upload">Upload Photo / Scan</button>
+              <button class="toggle-btn" id="btn-mode-camera">Live Camera Scan</button>
+            </div>
+
+            <!-- Upload Drop Zone -->
+            <div class="drop-zone" id="decoder-drop-zone">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p>Drag & Drop a photo or click anywhere to select</p>
+              <span>or press <strong style="color:var(--accent-cyan)">Ctrl + V</strong> to paste image from clipboard</span>
+              <button class="link-btn" id="btn-browse-file" style="display:none;">browse</button>
+              <input type="file" id="file-input-decoder" accept="image/*" style="display:none">
+            </div>
+
+            <!-- Webcam Controls -->
+            <div class="camera-panel" id="camera-panel" style="display: none;">
+              <video id="webcam-video" autoplay playsinline></video>
+              <div class="camera-buttons">
+                <button class="btn btn-primary" id="btn-capture-frame">Capture & Decode Frame</button>
+                <button class="btn btn-secondary" id="btn-stop-camera">Stop Camera</button>
+              </div>
+            </div>
+
+            <!-- Sample Test Image Buttons -->
+            <div class="sample-loaders">
+              <span>Try test samples:</span>
+              <button class="chip-btn" id="btn-load-sample-clean">Clean Matrix</button>
+              <button class="chip-btn" id="btn-load-sample-noisy">Tilted / Outdoor Photo</button>
+            </div>
+
+            <!-- Manual Corner Adjustment Notice -->
+            <div class="tip-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <p>The vision engine auto-detects the 4 corner finders. You can drag the 4 corner handles on the photo to fine-tune perspective alignment on angled shots!</p>
+            </div>
+          </div>
+
+          <!-- Right Column: Unwarped Matrix & Decoded Result -->
+          <div class="card preview-card">
+            <div class="card-header">
+              <h2>Decoded Data Payload</h2>
+              <span class="subtitle">Instant optical perspective unwarping, CIELAB swatch classification & self-healing Reed-Solomon</span>
+            </div>
+
+            <!-- Vision Inspection Dual View -->
+            <div class="vision-dual-view">
+              <div class="vision-box">
+                <span class="vision-box-title">Source Image & Corner Quad</span>
+                <div class="canvas-container">
+                  <canvas id="canvas-source-quad"></canvas>
+                </div>
+              </div>
+              <div class="vision-box">
+                <span class="vision-box-title">Rectified Matrix & Dot Sampling</span>
+                <div class="canvas-container">
+                  <canvas id="canvas-rectified-dots"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Decoded Output Panel -->
+            <div class="decoded-result-box" id="decoded-result-box">
+              <div class="result-status" id="result-status-badge">
+                <span class="status-indicator"></span>
+                <span class="status-text">Awaiting optical scan...</span>
+              </div>
+
+              <!-- Metrics -->
+              <div class="stats-grid" id="decode-stats-grid" style="margin-top: 12px;">
+                <div class="stat-item">
+                  <span class="stat-label">Grid Dimensions</span>
+                  <span class="stat-val" id="dec-stat-grid">-</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Palette Mode</span>
+                  <span class="stat-val" id="dec-stat-mode">-</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">RS Corrections</span>
+                  <span class="stat-val" id="dec-stat-ecc">-</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Color Shift ΔE</span>
+                  <span class="stat-val" id="dec-stat-deltae">-</span>
+                </div>
+              </div>
+
+              <!-- Output Textbox -->
+              <div class="decoded-text-wrapper">
+                <label style="color:var(--accent-emerald); font-weight:700;">Decoded Content (100% Restored):</label>
+                <pre class="decoded-text-output" id="decoded-text-output">No decoded data yet. Upload or scan a ChromaMatrix.</pre>
+              </div>
+
+              <div class="action-buttons">
+                <button class="btn btn-primary" id="btn-copy-decoded">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copy Text
+                </button>
+                <button class="btn btn-secondary" id="btn-save-decoded">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Save File (.txt)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: SHEET CAPACITY REPORT & LIMITS -->
+      <section class="tab-panel" id="tab-capacity">
+        <div class="card">
+          <div class="card-header">
+            <h2>Sheet Capacity Report: Letter vs A4 Physical Limits</h2>
+            <span class="subtitle">Physical limits and character density across optical capture tiers and Reed-Solomon redundancy</span>
+          </div>
+
+          <!-- Capacity Paper Selector Bar -->
+          <div class="form-row" style="margin-bottom: 20px; align-items: center;">
+            <div class="form-group flex-1" style="margin-bottom: 0;">
+              <label for="capacity-paper-select">Select Paper Format</label>
+              <select id="capacity-paper-select">
+                <option value="LETTER" selected>Letter Format (8.5" x 11" - 215.9 x 279.4 mm)</option>
+                <option value="A4">A4 Format (210 x 297 mm ISO 216)</option>
+              </select>
+            </div>
+
+            <div class="form-group flex-1" style="margin-bottom: 0;">
+              <label for="capacity-ecc-select">Reed-Solomon ECC Level</label>
+              <select id="capacity-ecc-select">
+                <option value="0.15">15% ECC Redundancy (High Cleanliness)</option>
+                <option value="0.25" selected>25% ECC Redundancy (Standard Paper Backup)</option>
+                <option value="0.35">35% ECC Redundancy (Heavy Duty UV/Stickers)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Capacity Comparison Table -->
+          <div class="capacity-table-wrapper" id="capacity-table-container">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Capacity Insight Cards -->
+          <div class="theory-grid" style="margin-top: 24px;">
+            <div class="theory-item">
+              <div class="theory-icon">🏷️</div>
+              <h3>Outdoor Sticker & UV Tag Print</h3>
+              <p><strong>Recommended Pitch:</strong> 0.90 mm (High contrast circular dots)<br>
+              <strong>3" x 3" Sticker:</strong> ~4,200 chars (~4.2 KB / ~2 pages of emergency text)<br>
+              <strong>Full Sheet:</strong> ~22,300 chars (22 KB / ~9 typed pages)<br>
+              Uses 35% Reed-Solomon redundancy to survive outdoor weathering, scratches, and UV fading.</p>
+            </div>
+
+            <div class="theory-item">
+              <div class="theory-icon">📄</div>
+              <h3>Paper Cold Storage Backup</h3>
+              <p><strong>Recommended Pitch:</strong> 0.50 mm (Macro / Stand photo)<br>
+              <strong>Letter Capacity:</strong> ~72,500 chars (71 KB / ~29 typed pages)<br>
+              <strong>A4 Capacity:</strong> ~75,500 chars (74 KB / ~30 typed pages)<br>
+              Ideal for archiving long documents, source code, recovery keys, and medical manuals.</p>
+            </div>
+
+            <div class="theory-item">
+              <div class="theory-icon">🖨️</div>
+              <h3>Flatbed Scanner (300 DPI)</h3>
+              <p><strong>Recommended Pitch:</strong> 0.25 mm (100 DPI optical dots)<br>
+              <strong>Letter Capacity:</strong> ~290,000 chars (283 KB / ~116 typed pages)<br>
+              <strong>A4 Capacity:</strong> ~302,000 chars (295 KB / ~121 typed pages)<br>
+              A single sheet of paper stores an entire 300-page book or complex codebase!</p>
+            </div>
+
+            <div class="theory-item">
+              <div class="theory-icon">⚡</div>
+              <h3>High-Res Flatbed (600 - 1200 DPI)</h3>
+              <p><strong>Recommended Pitch:</strong> 0.15 mm (170 DPI optical dots)<br>
+              <strong>Letter Capacity:</strong> ~806,000 chars (787 KB / ~322 typed pages)<br>
+              <strong>A4 Capacity:</strong> ~840,000 chars (820 KB / ~336 typed pages)<br>
+              Maximum theoretical single-page paper density with 8-bit 256-color palette.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: PRINTER FIDELITY LAB (BENCHMARK) -->
+      <section class="tab-panel" id="tab-benchmark">
+        <div class="panel-layout">
+          <!-- Left Column: Generate Target & Scan Upload -->
+          <div class="card control-card">
+            <div class="card-header">
+              <h2>Printer & UV Ink Calibration Lab</h2>
+              <span class="subtitle">Test how your specific printer, UV ink, or paper renders color dots</span>
+            </div>
+
+            <div class="workflow-steps">
+              <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <h4>Generate Color Calibration Target</h4>
+                  <p>Choose test depth and print the sheet on standard paper or sticker media.</p>
+                  <div class="form-row" style="margin-top: 8px;">
+                    <select id="benchmark-test-mode" class="flex-1">
+                      <option value="TEST_16" selected>16 Colors (High Reliability Sticker Test)</option>
+                      <option value="TEST_64">64 Colors (Full Gamut Sweep)</option>
+                      <option value="TEST_256">256 Colors (Maximum Density Test)</option>
+                    </select>
+                    <button class="btn btn-primary" id="btn-gen-benchmark-target">Generate Target</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <h4>Scan / Photograph Target Sheet</h4>
+                  <p>Take a photo with your smartphone or scan via flatbed scanner.</p>
+                  <div class="drop-zone" id="benchmark-drop-zone" style="margin-top: 8px; padding: 20px;">
+                    <p>Drop scanned target image here or click</p>
+                    <button class="link-btn" id="btn-browse-benchmark" style="display:none;">browse</button>
+                    <input type="file" id="file-input-benchmark" accept="image/*" style="display:none">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-accent" id="btn-run-synthetic-benchmark" style="margin-top: 16px; width: 100%;">
+              Run Simulated Benchmark with Print Bleed & Lighting Noise
+            </button>
+          </div>
+
+          <!-- Right Column: Fidelity Report & Gamut Heatmap -->
+          <div class="card preview-card">
+            <div class="card-header">
+              <h2>Color Fidelity & Gamut Diagnostics</h2>
+              <span class="subtitle">Calculates physical printer gamut compression, ΔE shift, and confusion matrix</span>
+            </div>
+
+            <!-- Benchmark Target Preview / Heatmap -->
+            <div class="benchmark-results-container" id="benchmark-results-container">
+              <div class="benchmark-summary-banner" id="benchmark-summary-banner">
+                <div class="banner-badge" id="bench-rating-badge">Rating: Ready</div>
+                <h3 id="bench-recommendation-title">Generate or upload a target to benchmark your printer</h3>
+                <p id="bench-recommendation-desc">The benchmark analyzer measures ink density, color shifts (ΔE), and recommends the optimal bits/dot palette.</p>
+              </div>
+
+              <div class="stats-grid" style="margin: 16px 0;">
+                <div class="stat-item">
+                  <span class="stat-label">Color Patches</span>
+                  <span class="stat-val" id="bench-stat-count">-</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Avg Gamut Drift</span>
+                  <span class="stat-val" id="bench-stat-drift">-</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Min Color Separation</span>
+                  <span class="stat-val" id="bench-stat-sep">-</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Confused Pairs</span>
+                  <span class="stat-val" id="bench-stat-confused">-</span>
+                </div>
+              </div>
+
+              <!-- Visual Color Patch Grid -->
+              <label>Measured Physical Colors vs Digital Reference:</label>
+              <div class="patch-grid-display" id="patch-grid-display"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: COLOR SCIENCE & THEORY -->
+      <section class="tab-panel" id="tab-theory">
+        <div class="card">
+          <div class="card-header">
+            <h2>Optical Color-Dot Storage: Principles & Science</h2>
+            <span class="subtitle">How self-calibrating CIELAB swatches and reserved Black & White markers solve physical paper storage</span>
+          </div>
+
+          <div class="theory-grid">
+            <div class="theory-item">
+              <div class="theory-icon">🎯</div>
+              <h3>1. Why Black & White are Reserved</h3>
+              <p>Pure Black ($K=100\%$) and Paper White provide the highest possible contrast on paper ($L^* \approx 0$ vs $L^* \approx 95$). By reserving black and white strictly for finder patterns, timing tracks, and reference bounds, the computer vision engine can detect orientation and unwarp perspective even under low-light or angled smartphone photography.</p>
+            </div>
+
+            <div class="theory-item">
+              <div class="theory-icon">🎨</div>
+              <h3>2. Self-Calibrating Reference Swatches</h3>
+              <p>Printers print using subtractive CMYK inks, while cameras capture additive sRGB light. Ambient room lighting (warm 2700K incandescent vs cold 6500K daylight) heavily distorts colors. By printing the exact reference palette right on the sheet's border, the decoder measures how that specific printer and lighting distorted each color, enabling accurate relative classification!</p>
+            </div>
+
+            <div class="theory-item">
+              <div class="theory-icon">🔬</div>
+              <h3>3. CIELAB & CIEDE2000 Color Space</h3>
+              <p>Unlike raw RGB (which is non-linear and device-dependent), CIELAB ($L^*, a^*, b^*$) models human and optical perception. CIEDE2000 ($\Delta E_{00}$) calculates perceptual difference accurately, ensuring that color matching remains robust even when printer colors vary in saturation or brightness.</p>
+            </div>
+
+            <div class="theory-item">
+              <div class="theory-icon">🛡️</div>
+              <h3>4. Reed-Solomon Error Resilience</h3>
+              <p>Even if paper gets smudged, ink bleeds slightly, or a dot is misread due to a camera glare reflection, Reed-Solomon ECC over Galois Field $GF(2^8)$ automatically detects and corrects corrupted symbols, guaranteeing 100% data fidelity.</p>
+            </div>
+          </div>
+
+          <!-- Interactive Palette Explorer -->
+          <div class="card-header" style="margin-top: 32px;">
+            <h2>Interactive Multi-Mode Palette Distance Explorer</h2>
+            <span class="subtitle">Inspect color coordinates and Euclidean separation in CIELAB color space</span>
+          </div>
+          <div class="theory-palette-explorer" id="theory-palette-explorer">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span>ChromaMatrix Optical Data Protocol • 100% Offline Physical Data Backups, UV Ink & Sticker Storage</span>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="src/web/main.js"></script>
+</body>
+</html>
