@@ -71,6 +71,17 @@ npm test
 
 ---
 
+## 📌 Roadmap & Pending Optimizations
+
+Techniques identified for future density and throughput upgrades:
+
+- [ ] **Stream Compression Pipelines (Gzip / Brotli / Zstandard / Deflate)**: Automatic pre-compression of text payloads into binary streams before symbol packing, reducing required physical dot grid size by 40%–70% on large texts (e.g., literature, logs, source code).
+- [ ] **Language-Aware Huffman & Tokenization (BPE / Byte-Pair Encoding)**: Assign shorter chromatic symbol sequences to high-frequency syllables and dictionary words based on language statistics.
+- [ ] **Efficient Binary-to-Symbol Mapping**: Optimized Base85 / Z85 vs raw byte multiplexing to maximize entropy per printed dot without ballooning character counts.
+- [ ] **Metadata Deduplication & Short Hashing**: Optional content-addressable hash headers for multi-page document sequencing.
+
+---
+
 ## License
 
 Licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)** license. See [`LICENSE`](LICENSE) for details.
