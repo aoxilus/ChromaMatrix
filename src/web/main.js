@@ -32,6 +32,7 @@ import {
 } from '../core/index.js';
 
 import { CameraManager } from './camera.js';
+import { initI18n, setLang, getLang, t, applyTranslations } from './i18n.js';
 
 // Application State
 const state = {
@@ -143,6 +144,9 @@ const DOM = {
   benchStatConfused: document.getElementById('bench-stat-confused'),
   patchGridDisplay: document.getElementById('patch-grid-display'),
 
+  // Language
+  langSelector: document.getElementById('lang-selector'),
+
   // Theory
   theoryPaletteExplorer: document.getElementById('theory-palette-explorer')
 };
@@ -151,6 +155,18 @@ const DOM = {
 // 1. Initialization & Navigation
 // ==========================================
 function init() {
+  initI18n();
+
+  if (DOM.langSelector) {
+    DOM.langSelector.addEventListener('change', (e) => {
+      setLang(e.target.value);
+      renderStudioPaletteBar();
+      renderStudioMatrix();
+      if (state.activeTab === 'capacity') renderCapacityTable();
+      if (state.activeTab === 'theory') renderTheoryExplorer();
+    });
+  }
+
   initTabs();
   initStudio();
   initDecoder();

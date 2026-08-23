@@ -2,6 +2,8 @@
 
 > **Offline optical data storage on standard paper and stickers using high-density color dots, real-time CIELAB perceptual calibration, and Reed-Solomon $GF(2^8)$ error recovery.**
 
+> **[Read in English 🇺🇸](README.md)** · **[Leer en Español 🇪🇸](README.es.md)**
+
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Author: aoxilus](https://img.shields.io/badge/Author-aoxilus%20🥑-brightgreen.svg)](https://github.com/aoxilus)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-blue.svg)](https://nodejs.org)
@@ -21,13 +23,14 @@
 4. **Reed-Solomon Error Correction Code (RS-ECC)**: Full Galois Field $GF(2^8)$ arithmetic with Berlekamp-Massey algorithm to automatically recover from paper smudges, print bleed, or optical glare.
 5. **Printer & Scanner Fidelity Benchmark Lab**: Measures physical color shifts ($\Delta E$), confusion matrices, and recommends the optimal palette for your specific printer and camera setup.
 6. **Zero-Dependency Architecture**: Built using pure JavaScript/HTML5 Canvas in the browser and pure Node.js on the server/CLI.
+7. **Bilingual UI (English & Spanish)**: Live language toggle directly in the web interface.
 
 ---
 
 ## Prior Art & Theoretical Foundation
 
 For an in-depth analysis of related systems (Microsoft HCCB, Zebra Ultracode, Twibright Optar, PaperBack, HCC2D, MMCC, CIELAB color theory) and a complete comparative matrix, see:
-👉 **[Documentation: State of the Art & Prior Art Analysis](docs/PRIOR_ART_AND_COMPARISON.md)**
+👉 **[Documentation: State of the Art & Prior Art Analysis](docs/PRIOR_ART_AND_COMPARISON.md)** (or **[Leer en Español](docs/PRIOR_ART_AND_COMPARISON.es.md)**)
 
 ---
 
@@ -39,7 +42,7 @@ npm start
 ```
 Open **`http://localhost:3000`** in your browser to access:
 - **Matrix Studio (Encoder)**: Real-time matrix generator, dot inspector, SVG/PNG/Print export.
-- **Scan & Decode**: File drag-and-drop or Live Webcam feed with interactive corner handles.
+- **Scan & Decode**: File drag-and-drop, clipboard paste (`Ctrl+V`), or Live Webcam feed with interactive corner handles.
 - **Printer Fidelity Lab**: Color calibration test sheet generator and scanned target analyzer.
 - **Color Theory & Gamut**: Perceptual CIELAB distance visualizer.
 
