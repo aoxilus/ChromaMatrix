@@ -9,6 +9,18 @@
 import { PALETTE_MODES, getPalette } from './palette.js';
 import { encodePayloadRS } from './reedsolomon.js';
 import { hexToRgb } from './colorspace.js';
+import {
+  COMPRESSION_MODES,
+  compressionIdFromMode,
+  compressionModeFromId,
+  compressBytes
+} from './compression.js';
+import {
+  createBinaryLocator,
+  getBinaryLocatorCell,
+  isBinaryLocatorCell
+} from './binary-locator.js';
+const BINARY_LOCATOR = createBinaryLocator();
 
 // Reserved color definitions
 export const COLOR_RESERVED_BLACK = '#000000';
@@ -21,7 +33,8 @@ export const CELL_TYPES = {
   TIMING: 2,
   CALIBRATION: 3,
   HEADER: 4,
-  DATA: 5
+  DATA: 5,
+  BINARY_LOCATOR: 6
 };
 
 /**
@@ -62,6 +75,10 @@ export function getPaletteModeFromId(id) {
     case 5: return PALETTE_MODES.PALETTE_256;
     default: return PALETTE_MODES.PALETTE_16;
   }
+}
+
+export function getCompressionIdFromHeaderMode(modeByte) {
+  return (modeByte >> 4) & 0x0F;
 }
 
 /**
@@ -105,6 +122,8 @@ export function getCalibrationCoordinates(gridSize, count) {
  * Check if a cell coordinate is reserved for finders, timing, calibration, or header
  */
 export function isCellReserved(gx, gy, gridSize, calibCount) {
+  if (isBinaryLocatorCell(gx, gy, gridSize, BINARY_LOCATOR)) return true;
+
   // Finder patterns (4 corners 7x7)
   if ((gx < 7 && gy < 7) ||
       (gx >= gridSize - 7 && gy < 7) ||
@@ -239,7 +258,9 @@ export function symbolsToBytes(symbols, mode, expectedByteLength) {
  * Calculate required matrix grid dimension (W x W) to hold payload + header + markers
  */
 export function calculateRequiredGridSize(symbolCount, paletteColorCount) {
-  let size = 25;
+  const locatorMinimum = 8 + BINARY_LOCATOR.footprint;
+  let size = Math.max(25, locatorMinimum + 8);
+  if (size % 2 === 0) size++;
   while (true) {
     let availableDataCells = 0;
     const calibCount = paletteColorCount + 2;
@@ -262,8 +283,11 @@ export function calculateRequiredGridSize(symbolCount, paletteColorCount) {
  * Build the full ChromaMatrix model
  */
 export function encodeChromaMatrix(dataInput, options = {}) {
-  const mode = options.mode || PALETTE_MODES.PALETTE_16;
+  // The default contract targets phone cameras: fewer, spectrally separated
+  // colors are more reliable than maximum density at low capture resolution.
+  const mode = options.mode || PALETTE_MODES.PALETTE_8;
   const eccRatio = options.eccRatio !== undefined ? options.eccRatio : 0.25;
+  const compressionId = options.compressionId || 0;
 
   let rawBytes;
   if (typeof dataInput === 'string') {
@@ -362,11 +386,25 @@ export function encodeChromaMatrix(dataInput, options = {}) {
     };
   }
 
+  // Horizontal binary ChromaMatrix signature next to the top-left finder.
+  const locatorFootprint = BINARY_LOCATOR.footprint;
+  for (let gx = 0; gx < locatorFootprint; gx++) {
+    const x = 8 + gx;
+    const y = 8;
+    if (x < gridSize) {
+      grid[y][x] = {
+        type: CELL_TYPES.BINARY_LOCATOR,
+        color: getBinaryLocatorCell(x, y, BINARY_LOCATOR) ? COLOR_RESERVED_BLACK : COLOR_RESERVED_WHITE,
+        locatorText: BINARY_LOCATOR.text
+      };
+    }
+  }
+
   // Header
   const headerBytes = new Uint8Array(13);
   headerBytes[0] = 0x43; // 'C'
   headerBytes[1] = 0x4D; // 'M'
-  headerBytes[2] = getPaletteModeId(mode);
+  headerBytes[2] = getPaletteModeId(mode) | (compressionId << 4);
   headerBytes[3] = gridSize;
   headerBytes[4] = (rawBytes.length >> 24) & 0xFF;
   headerBytes[5] = (rawBytes.length >> 16) & 0xFF;
@@ -401,6 +439,18 @@ export function encodeChromaMatrix(dataInput, options = {}) {
 
   // Fill Payload Data
   let dataSymIdx = 0;
+  const paddingSeed = codewordStream.reduce((hash, byte) => (
+    Math.imul(hash ^ byte, 16777619) >>> 0
+  ), 2166136261);
+  function getPaddingSymbol(x, y) {
+    let hash = paddingSeed ^ Math.imul(x + 0x9E3779B9, 0x85EBCA6B);
+    hash ^= Math.imul(y + 0xC2B2AE35, 0x27D4EB2F);
+    hash ^= Math.imul(gridSize, 0x165667B1);
+    hash = Math.imul(hash ^ (hash >>> 16), 0x85EBCA6B);
+    hash = Math.imul(hash ^ (hash >>> 13), 0xC2B2AE35);
+    return (hash ^ (hash >>> 16)) >>> 0;
+  }
+
   for (let y = 0; y < gridSize; y++) {
     for (let x = 0; x < gridSize; x++) {
       if (grid[y][x].type === CELL_TYPES.EMPTY) {
@@ -415,7 +465,7 @@ export function encodeChromaMatrix(dataInput, options = {}) {
           };
           dataSymIdx++;
         } else {
-          const padSym = (x + y) % palette.length;
+          const padSym = getPaddingSymbol(x, y) % palette.length;
           grid[y][x] = {
             type: CELL_TYPES.DATA,
             color: palette[padSym].hex,
@@ -431,12 +481,35 @@ export function encodeChromaMatrix(dataInput, options = {}) {
     gridSize,
     mode,
     eccRatio,
+    compressionId,
+    compression: compressionModeFromId(compressionId),
     rawByteLength: rawBytes.length,
+    originalByteLength: options.originalByteLength ?? rawBytes.length,
     totalCodewordBytes,
     symbolCount: dataSymbols.length,
     rsBlocksMeta: rsBlocks.map(b => ({ dataLen: b.dataLen, eccLen: b.eccLen })),
     grid
   };
+}
+
+/**
+ * Compress a payload and then encode the compressed bytes into a matrix.
+ * The compression identifier is stored in the high nibble of the existing
+ * palette-mode header byte, preserving compatibility with uncompressed data.
+ */
+export async function encodeChromaMatrixAsync(dataInput, options = {}) {
+  const rawBytes = typeof dataInput === 'string'
+    ? new TextEncoder().encode(dataInput)
+    : dataInput instanceof Uint8Array
+      ? dataInput
+      : new Uint8Array(dataInput);
+  const compression = options.compression ?? COMPRESSION_MODES.BROTLI;
+  const compressedBytes = await compressBytes(rawBytes, compression, options);
+  return encodeChromaMatrix(compressedBytes, {
+    ...options,
+    compressionId: compressionIdFromMode(compression),
+    originalByteLength: rawBytes.length
+  });
 }
 
 /**
@@ -461,7 +534,7 @@ export function matrixToSvg(matrixModel, options = {}) {
       const px = (x + margin) * cellSize;
       const py = (y + margin) * cellSize;
 
-      if (cell.type === CELL_TYPES.FINDER || cell.type === CELL_TYPES.TIMING) {
+      if (cell.type === CELL_TYPES.FINDER || cell.type === CELL_TYPES.TIMING || cell.type === CELL_TYPES.BINARY_LOCATOR) {
         svg += `  <rect x="${px}" y="${py}" width="${cellSize}" height="${cellSize}" fill="${cell.color}"/>\n`;
       } else {
         const radius = (cellSize * dotScale) / 2;
@@ -527,7 +600,7 @@ export function matrixToRgbaBuffer(matrixModel, options = {}) {
           if (imgX >= width || imgY >= height) continue;
 
           let fill = false;
-          if (cell.type === CELL_TYPES.FINDER || cell.type === CELL_TYPES.TIMING) {
+          if (cell.type === CELL_TYPES.FINDER || cell.type === CELL_TYPES.TIMING || cell.type === CELL_TYPES.BINARY_LOCATOR) {
             fill = true;
           } else if (dotShape === 'circle') {
             const dx = (imgX + 0.5) - cx;

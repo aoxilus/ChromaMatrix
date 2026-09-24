@@ -11,12 +11,14 @@ import { decodePayloadRS } from './reedsolomon.js';
 import {
   symbolsToBytes,
   getPaletteModeFromId,
+  getCompressionIdFromHeaderMode,
   crc16,
   getHeaderCoordinates,
   getCalibrationCoordinates,
   isCellReserved
 } from './encoder.js';
 import { rgbToLab, normalizeWhiteBalance } from './colorspace.js';
+import { compressionModeFromId, decompressBytes } from './compression.js';
 
 /**
  * Solve 8-DOF Linear System for 4-Point Projective Transformation (Homography)
@@ -128,54 +130,216 @@ export function sampleBilinear(imageData, x, y) {
  */
 export function detectCornerFiducials(imageData) {
   const { width, height, data } = imageData;
-  const gray = new Uint8Array(width * height);
-  let minLum = 255;
-  let maxLum = 0;
+  const bounds = estimateColorBounds(imageData);
+  const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+  const scaleCandidates = [0.035, 0.045, 0.06, 0.08, 0.105, 0.14, 0.19, 0.25];
+  const minimumFinderSize = Math.max(12, Math.round(span * 0.025));
+  const isLikelyPhotograph = Math.abs(width - height) > Math.max(width, height) * 0.05;
+  const hasOuterBackground = isLikelyPhotograph && span < Math.min(width, height) * 0.9;
 
-  for (let i = 0; i < width * height; i++) {
-    const idx = i * 4;
-    const lum = Math.round(0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]);
-    gray[i] = lum;
-    if (lum < minLum) minLum = lum;
-    if (lum > maxLum) maxLum = lum;
-  }
-
-  const threshold = minLum + (maxLum - minLum) * 0.40;
-  const halfW = Math.floor(width / 2);
-  const halfH = Math.floor(height / 2);
-
-  function findCornerInQuadrant(startX, endX, startY, endY, targetDirection) {
+  function findCornerAtSize(corner, size) {
     let bestScore = -Infinity;
-    let bestPt = { x: (startX + endX) / 2, y: (startY + endY) / 2 };
+    let bestPt = cornerBasePoint(bounds, corner, size);
+    const base = cornerBasePoint(bounds, corner, size);
+    // Color bounds often begin at the first colored data dots, while the
+    // black/white finder extends outside that band. Search beyond the color
+    // edge so a dark sidebar cannot force the marker search inward.
+    const searchRadius = Math.max(4, Math.round(size * (hasOuterBackground ? 1.6 : 0.45)));
+    const step = Math.max(1, Math.floor(size / 8));
 
-    for (let y = startY; y < endY; y += 1) {
-      for (let x = startX; x < endX; x += 1) {
-        const idx = y * width + x;
-        if (gray[idx] < threshold) {
-          let score = 0;
-          if (targetDirection === 'TL') score = -(x + y);
-          else if (targetDirection === 'TR') score = (x - y);
-          else if (targetDirection === 'BL') score = -(x - y);
-          else if (targetDirection === 'BR') score = (x + y);
-
-          if (score > bestScore) {
-            bestScore = score;
-            bestPt = { x, y };
-          }
+    for (let yOffset = -searchRadius; yOffset <= searchRadius; yOffset += step) {
+      for (let xOffset = -searchRadius; xOffset <= searchRadius; xOffset += step) {
+        const y = Math.round(base.y + yOffset);
+        const x = Math.round(base.x + xOffset);
+        if (x < 0 || y < 0 || x + size >= width || y + size >= height) continue;
+        const score = scoreFinderPattern(imageData, x, y, size);
+        if (score > bestScore) {
+          bestScore = score;
+          bestPt = { x, y };
         }
       }
     }
-    return bestPt;
+    return { point: bestPt, score: bestScore };
   }
 
-  const tl = findCornerInQuadrant(0, halfW, 0, halfH, 'TL');
-  const tr = findCornerInQuadrant(halfW, width, 0, halfH, 'TR');
-  const bl = findCornerInQuadrant(0, halfW, halfH, height, 'BL');
-  const br = findCornerInQuadrant(halfW, width, halfH, height, 'BR');
+  // All four finders are the same size in an undistorted image. Choosing a
+  // shared size prevents a small all-black patch from winning independently
+  // in one corner and producing an invalid homography.
+  let bestSet = null;
+  for (const scale of scaleCandidates) {
+    const size = Math.max(minimumFinderSize, Math.round(span * scale));
+    const set = ['TL', 'TR', 'BR', 'BL'].map((corner) => ({
+      corner,
+      ...findCornerAtSize(corner, size)
+    }));
+    const totalScore = set.reduce((sum, item) => sum + item.score, 0);
+    if (!bestSet || totalScore > bestSet.totalScore) {
+      bestSet = { size, totalScore, set };
+    }
+  }
+
+  const points = Object.fromEntries(bestSet.set.map(({ corner, point }) => [corner, point]));
+  const padding = Math.max(2, Math.round(bestSet.size * 0.04));
+  const tl = { x: points.TL.x - padding, y: points.TL.y - padding };
+  const tr = { x: points.TR.x + bestSet.size + padding, y: points.TR.y - padding };
+  const br = {
+    x: points.BR.x + bestSet.size + padding,
+    y: points.BR.y + bestSet.size + padding
+  };
+  const bl = { x: points.BL.x - padding, y: points.BL.y + bestSet.size + padding };
+  const candidateCorners = [tl, tr, br, bl];
+  const perspectiveSignal = Math.max(
+    Math.abs(tl.y - tr.y),
+    Math.abs(bl.y - br.y),
+    Math.abs(tl.x - bl.x),
+    Math.abs(tr.x - br.x)
+  ) / Math.max(1, span);
+
+  // For a flat/clean render, the saturated content bounds are more accurate
+  // than a finder score that can be attracted to a dark data dot. Preserve
+  // the scored quadrilateral only when it contains meaningful perspective.
+  if (perspectiveSignal < 0.01) {
+    const boundsPadding = Math.max(2, Math.round(span * 0.003));
+    return {
+      corners: [
+        { x: bounds.minX - boundsPadding, y: bounds.minY - boundsPadding },
+        { x: bounds.maxX + boundsPadding, y: bounds.minY - boundsPadding },
+        { x: bounds.maxX + boundsPadding, y: bounds.maxY + boundsPadding },
+        { x: bounds.minX - boundsPadding, y: bounds.maxY + boundsPadding }
+      ],
+      detected: true
+    };
+  }
 
   return {
-    corners: [tl, tr, br, bl],
+    corners: candidateCorners,
     detected: true
+  };
+}
+
+function luminanceAt(imageData, x, y) {
+  const px = Math.max(0, Math.min(imageData.width - 1, Math.round(x)));
+  const py = Math.max(0, Math.min(imageData.height - 1, Math.round(y)));
+  const idx = (py * imageData.width + px) * 4;
+  return 0.299 * imageData.data[idx] +
+    0.587 * imageData.data[idx + 1] +
+    0.114 * imageData.data[idx + 2];
+}
+
+function darknessPatch(imageData, cx, cy, radius) {
+  let total = 0;
+  let count = 0;
+  for (let y = -radius; y <= radius; y++) {
+    for (let x = -radius; x <= radius; x++) {
+      total += 1 - luminanceAt(imageData, cx + x, cy + y) / 255;
+      count++;
+    }
+  }
+  return total / count;
+}
+
+function scoreFinderPattern(imageData, x, y, size) {
+  const cellSize = size / 7;
+  const radius = Math.max(1, Math.round(cellSize * 0.18));
+  let score = 0;
+
+  // Match the actual 7x7 finder-cell structure instead of only looking for
+  // dark pixels. This avoids mistaking a dense dark data patch for a marker.
+  for (let gy = 0; gy < 7; gy++) {
+    for (let gx = 0; gx < 7; gx++) {
+      const darkness = darknessPatch(
+        imageData,
+        x + (gx + 0.5) * cellSize,
+        y + (gy + 0.5) * cellSize,
+        radius
+      );
+      const isBorder = gx === 0 || gx === 6 || gy === 0 || gy === 6;
+      const isCenter = gx >= 2 && gx <= 4 && gy >= 2 && gy <= 4;
+      const expectedDark = isBorder || isCenter;
+      score += expectedDark ? darkness : (1 - darkness);
+    }
+  }
+  return score / 49;
+}
+
+function cornerBasePoint(bounds, corner, finderSize = 0) {
+  const right = corner === 'TR' || corner === 'BR';
+  const bottom = corner === 'BL' || corner === 'BR';
+  return {
+    x: right ? bounds.maxX - finderSize : bounds.minX,
+    y: bottom ? bounds.maxY - finderSize : bounds.minY
+  };
+}
+
+function estimateColorBounds(imageData) {
+  const { width, height, data } = imageData;
+  const step = Math.max(1, Math.floor(Math.min(width, height) / 300));
+  const xBins = new Uint32Array(Math.ceil(width / step));
+  const yBins = new Uint32Array(Math.ceil(height / step));
+  let rawMinX = width;
+  let rawMinY = height;
+  let rawMaxX = 0;
+  let rawMaxY = 0;
+
+  for (let y = 0; y < height; y += step) {
+    for (let x = 0; x < width; x += step) {
+      const idx = (y * width + x) * 4;
+      const max = Math.max(data[idx], data[idx + 1], data[idx + 2]);
+      const min = Math.min(data[idx], data[idx + 1], data[idx + 2]);
+      const lum = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+      if (max - min > 28 && lum > 25 && lum < 250) {
+        rawMinX = Math.min(rawMinX, x);
+        rawMinY = Math.min(rawMinY, y);
+        rawMaxX = Math.max(rawMaxX, x);
+        rawMaxY = Math.max(rawMaxY, y);
+        xBins[Math.floor(x / step)]++;
+        yBins[Math.floor(y / step)]++;
+      }
+    }
+  }
+
+  function dominantRange(bins, thresholdRatio) {
+    const maxHits = Math.max(...bins);
+    if (!maxHits) return null;
+    const threshold = maxHits * thresholdRatio;
+    let bestStart = -1;
+    let bestEnd = -1;
+    let runStart = -1;
+
+    for (let i = 0; i <= bins.length; i++) {
+      const active = i < bins.length && bins[i] >= threshold;
+      if (active && runStart < 0) {
+        runStart = i;
+      } else if (!active && runStart >= 0) {
+        if (i - runStart > bestEnd - bestStart) {
+          bestStart = runStart;
+          bestEnd = i - 1;
+        }
+        runStart = -1;
+      }
+    }
+
+    return bestStart >= 0
+      ? { min: bestStart * step, max: Math.min((bestEnd + 1) * step - 1, bins.length * step - 1) }
+      : null;
+  }
+
+  // Sidebars and dark photographic backgrounds can contain a few saturated
+  // JPEG pixels. The matrix itself forms the dominant contiguous color band.
+  const xRange = dominantRange(xBins, 0.45);
+  const yRange = dominantRange(yBins, 0.10);
+  const isLikelyPhotograph = Math.abs(width - height) > Math.max(width, height) * 0.05;
+  if (!isLikelyPhotograph && rawMinX < rawMaxX && rawMinY < rawMaxY) {
+    return { minX: rawMinX, minY: rawMinY, maxX: rawMaxX, maxY: rawMaxY };
+  }
+  if (!xRange || !yRange || xRange.min >= xRange.max || yRange.min >= yRange.max) {
+    return { minX: 0, minY: 0, maxX: width - 1, maxY: height - 1 };
+  }
+  return {
+    minX: xRange.min,
+    minY: yRange.min,
+    maxX: xRange.max,
+    maxY: yRange.max
   };
 }
 
@@ -307,8 +471,10 @@ export function decodeChromaMatrix(imageData, options = {}) {
       if (expectedCrc !== actualCrc) continue;
 
       // Header is valid!
-      const modeId = headerBytes[2];
-      const mode = getPaletteModeFromId(modeId);
+      const modeByte = headerBytes[2];
+      const mode = getPaletteModeFromId(modeByte & 0x0F);
+      const compressionId = getCompressionIdFromHeaderMode(modeByte);
+      const compression = compressionModeFromId(compressionId);
       const gridSize = headerBytes[3];
       const payloadLength = (headerBytes[4] << 24) | (headerBytes[5] << 16) | (headerBytes[6] << 8) | headerBytes[7];
       const blockCount = headerBytes[8];
@@ -433,7 +599,10 @@ export function decodeChromaMatrix(imageData, options = {}) {
             success: true,
             gridSize,
             mode,
+            compression,
+            compressionId,
             payloadLength: rsResult.data.length,
+            compressedData: rsResult.data,
             data: rsResult.data,
             text,
             correctedErrors: rsResult.totalErrorsCorrected,
@@ -442,6 +611,8 @@ export function decodeChromaMatrix(imageData, options = {}) {
             cellSamples,
             header: {
               mode,
+              compression,
+              compressionId,
               gridSize,
               payloadLength,
               blockCount,
@@ -465,4 +636,27 @@ export function decodeChromaMatrix(imageData, options = {}) {
     success: false,
     error: 'Failed to decode ChromaMatrix: could not find valid header or uncorrectable errors exceed ECC capacity.'
   };
+}
+
+/**
+ * Decode a matrix and transparently decompress its payload.
+ */
+export async function decodeChromaMatrixAsync(imageData, options = {}) {
+  const result = decodeChromaMatrix(imageData, options);
+  if (!result.success || result.compression === 'none') return result;
+
+  try {
+    const data = await decompressBytes(result.compressedData, result.compression);
+    return {
+      ...result,
+      data,
+      payloadLength: data.length,
+      text: new TextDecoder('utf-8', { fatal: false }).decode(data)
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: `Payload decompression failed (${result.compression}): ${error.message}`
+    };
+  }
 }

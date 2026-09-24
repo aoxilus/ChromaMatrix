@@ -15,7 +15,7 @@
 1. **Reserved Black & White Framing**: QR-style nested square corner fiducials, timing tracks, and dynamic range calibration targets strictly reserve pure Black and Paper White for spatial/exposure registration.
 2. **On-Sheet Self-Calibrating Swatches**: Reference palette swatches printed along the borders allow the decoder to normalize for printer CMYK gamuts, paper reflectance, and ambient camera lighting shifts.
 3. **Multi-Mode Color Palettes**:
-   - `PALETTE_8` (3 bits/dot): Ultra-high contrast and reliability.
+   - `PALETTE_8` (3 bits/dot): Default Android/phone contract with separated spectra.
    - `PALETTE_16` (4 bits = 1 nibble/dot, 2 dots/byte): Optimal density and stability.
    - `PALETTE_64` (6 bits/dot): Base64 symbol packing.
    - `ASCII_95` (Printable ASCII 32–126): Direct 1-to-1 character assignment.
@@ -24,6 +24,8 @@
 5. **Printer & Scanner Fidelity Benchmark Lab**: Measures physical color shifts ($\Delta E$), confusion matrices, and recommends the optimal palette for your specific printer and camera setup.
 6. **Zero-Dependency Architecture**: Built using pure JavaScript/HTML5 Canvas in the browser and pure Node.js on the server/CLI.
 7. **Bilingual UI (English & Spanish)**: Live language toggle directly in the web interface.
+8. **Payload Compression**: Optional GZIP or Brotli compression runs before Reed-Solomon to reduce matrix size while preserving automatic decoding.
+9. **Binary Format Signature**: A reserved horizontal black-and-white ASCII-binary line spells `ChromaMatrix` before color decoding begins, so an AI can identify the format and find its source repository.
 
 ---
 
@@ -36,7 +38,14 @@ For an in-depth analysis of related systems (Microsoft HCCB, Zebra Ultracode, Tw
 
 ## Quick Start
 
-### 1. Start the Interactive Web Application
+### 1. Open Production
+
+The live production application is available at:
+👉 **<https://esail.ac.tamu.edu/pdata/>**
+
+The source repository is [`aoxilus/ChromaMatrix`](https://github.com/aoxilus/ChromaMatrix).
+
+### 2. Start the Interactive Web Application Locally
 ```bash
 npm start
 ```
@@ -46,7 +55,7 @@ Open **`http://localhost:3000`** in your browser to access:
 - **Wiki**: Purpose, workflow, capacity, color calibration, and CIELAB notes.
 - **Print test**: Generate and analyze printer calibration targets.
 
-### 2. Run CLI Commands
+### 3. Run CLI Commands
 
 #### Encode Text or File
 ```bash
@@ -67,10 +76,16 @@ npm run benchmark -- --generate target.png --mode TEST_64
 npm run benchmark -- --analyze target.png --mode TEST_64
 ```
 
-### 3. Run Automated Tests
+### 4. Run Automated Tests
 ```bash
 npm test
 ```
+
+### 5. Android Reader
+
+Open [`android/`](android/) in Android Studio. It targets Android 11+ and
+packages the local web reader, including upload, paste, and camera decoding.
+The phone-safe default is `PALETTE_8`; existing palette modes remain readable.
 
 ---
 
@@ -78,7 +93,7 @@ npm test
 
 Techniques identified for future density and throughput upgrades:
 
-- [ ] **Stream Compression Pipelines (Gzip / Brotli / Zstandard / Deflate)**: Automatic pre-compression of text payloads into binary streams before symbol packing, reducing required physical dot grid size by 40%–70% on large texts (e.g., literature, logs, source code).
+- [x] **Stream Compression Pipelines (Gzip / Brotli)**: Optional pre-compression of text payloads before symbol packing, reducing required physical dot grid size on repetitive content.
 - [ ] **Language-Aware Huffman & Tokenization (BPE / Byte-Pair Encoding)**: Assign shorter chromatic symbol sequences to high-frequency syllables and dictionary words based on language statistics.
 - [ ] **Efficient Binary-to-Symbol Mapping**: Optimized Base85 / Z85 vs raw byte multiplexing to maximize entropy per printed dot without ballooning character counts.
 - [ ] **Metadata Deduplication & Short Hashing**: Optional content-addressable hash headers for multi-page document sequencing.

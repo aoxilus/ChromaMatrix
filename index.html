@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="src/web/style.css?v=wiki-20260924">
+  <link rel="stylesheet" href="src/web/style.css?v=contrast-20260924">
 </head>
 <body>
   <div class="app-container">
@@ -53,6 +53,10 @@
           <option value="en" selected>🇺🇸 EN</option>
           <option value="es">🇪🇸 ES</option>
         </select>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch theme">
+          <span id="theme-toggle-icon">☀️</span>
+          <span id="theme-toggle-label" data-i18n="theme.light">Light</span>
+        </button>
       </div>
     </header>
 
@@ -104,8 +108,8 @@
               <div class="form-group flex-1">
                 <label for="palette-mode" data-i18n="studio.palette.label">Color Palette Mode</label>
                 <select id="palette-mode">
-                  <option value="PALETTE_16" data-i18n="opt.palette16" selected>16 colors · 4 bits/dot</option>
-                  <option value="PALETTE_8" data-i18n="opt.palette8">8 colors · 3 bits/dot · safer</option>
+                  <option value="PALETTE_16" data-i18n="opt.palette16">16 colors · 4 bits/dot</option>
+                  <option value="PALETTE_8" data-i18n="opt.palette8" selected>8 colors · 3 bits/dot · separated spectra</option>
                   <option value="ASCII_95" data-i18n="opt.ascii95">ASCII-95 · 1 char/dot</option>
                   <option value="PALETTE_64" data-i18n="opt.palette64">64 colors · 6 bits/dot</option>
                   <option value="PALETTE_256" data-i18n="opt.palette256">256 colors · 8 bits/dot</option>
@@ -123,6 +127,15 @@
               </div>
             </div>
 
+            <div class="form-group">
+              <label for="compression-mode" data-i18n="studio.compression.label">Payload compression</label>
+              <select id="compression-mode">
+                <option value="none" data-i18n="opt.compression.none">Natural · no compression</option>
+                <option value="gzip" data-i18n="opt.compression.gzip">GZIP · compatible</option>
+                <option value="brotli" data-i18n="opt.compression.brotli" selected>Brotli · smallest payload</option>
+              </select>
+            </div>
+
             <div class="form-row">
               <div class="form-group flex-1">
                 <label for="dot-shape" data-i18n="studio.shape.label">Dot shape</label>
@@ -138,6 +151,12 @@
                 <input type="range" id="cell-size" min="10" max="32" value="18">
                 <span class="range-val" id="cell-size-val">18 px</span>
               </div>
+            </div>
+
+            <div class="form-group">
+              <label for="preview-size" data-i18n="studio.previewSize.label">On-screen matrix size</label>
+              <input type="range" id="preview-size" min="160" max="900" value="620">
+              <span class="range-val" id="preview-size-val">620 px</span>
             </div>
 
             <!-- Active Palette Swatches Preview -->
@@ -358,6 +377,11 @@
               <div class="theory-icon">📏</div>
               <h3 data-i18n="wiki.capacity.title">What capacity means</h3>
               <p data-i18n="wiki.capacity.text">Smaller dots and more colors store more data, but require better printing, lighting, and scanning.</p>
+            </div>
+            <div class="theory-item">
+              <div class="theory-icon">🗜️</div>
+              <h3 data-i18n="wiki.compression.title">Payload compression</h3>
+              <p data-i18n="wiki.compression.text">Brotli or GZIP compresses the payload before Reed-Solomon, reducing the matrix size while preserving automatic decompression during decode.</p>
             </div>
           </div>
 

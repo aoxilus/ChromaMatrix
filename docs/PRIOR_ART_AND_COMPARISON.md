@@ -2,6 +2,9 @@
 
 > **[Read in English 🇺🇸](PRIOR_ART_AND_COMPARISON.md)** · **[Leer en Español 🇪🇸](PRIOR_ART_AND_COMPARISON.es.md)**
 
+Live production: <https://esail.ac.tamu.edu/pdata/> · Source repository:
+<https://github.com/aoxilus/ChromaMatrix>
+
 ---
 
 ## 1. Executive Summary

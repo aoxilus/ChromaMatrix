@@ -13,11 +13,12 @@ import {
   rgbToLab,
   deltaE2000,
   encodeChromaMatrix,
+  encodeChromaMatrixAsync,
   matrixToSvg,
   matrixToRgbaBuffer,
   detectCornerFiducials,
   rectifyMatrix,
-  decodeChromaMatrix,
+  decodeChromaMatrixAsync,
   BENCHMARK_MODES,
   generateBenchmarkTarget,
   benchmarkTargetToSvg,
@@ -39,13 +40,14 @@ const state = {
   activeTab: 'studio',
   encoder: {
     text: '',
-    mode: PALETTE_MODES.PALETTE_16,
+    mode: PALETTE_MODES.PALETTE_8,
     eccRatio: 0.25,
     dotShape: 'circle',
     cellSize: 16,
     isEncrypted: false,
     password: '',
-    currentMatrix: null
+    currentMatrix: null,
+    renderSerial: 0
   },
   decoder: {
     sourceImage: null,
@@ -77,9 +79,12 @@ const DOM = {
   fileInputEncoder: document.getElementById('file-input-encoder'),
   paletteMode: document.getElementById('palette-mode'),
   eccLevel: document.getElementById('ecc-level'),
+  compressionMode: document.getElementById('compression-mode'),
   dotShape: document.getElementById('dot-shape'),
   cellSize: document.getElementById('cell-size'),
   cellSizeVal: document.getElementById('cell-size-val'),
+  previewSize: document.getElementById('preview-size'),
+  previewSizeVal: document.getElementById('preview-size-val'),
   studioPaletteBar: document.getElementById('studio-palette-bar'),
   matrixPreviewStage: document.getElementById('matrix-canvas-wrapper'),
   btnDownloadPng: document.getElementById('btn-download-png'),
@@ -146,6 +151,9 @@ const DOM = {
 
   // Language
   langSelector: document.getElementById('lang-selector'),
+  themeToggle: document.getElementById('theme-toggle'),
+  themeToggleIcon: document.getElementById('theme-toggle-icon'),
+  themeToggleLabel: document.getElementById('theme-toggle-label'),
 
   // Theory
   theoryPaletteExplorer: document.getElementById('theory-palette-explorer')
@@ -155,12 +163,14 @@ const DOM = {
 // 1. Initialization & Navigation
 // ==========================================
 function init() {
+  initTheme();
   initI18n();
 
   // Language switcher
   if (DOM.langSelector) {
     DOM.langSelector.addEventListener('change', (e) => {
       setLang(e.target.value);
+      updateThemeButton();
       renderStudioPaletteBar();
       renderStudioMatrix();
       if (state.activeTab === 'wiki') {
@@ -178,6 +188,26 @@ function init() {
   initTheory();
 
   renderStudioMatrix();
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('chromamatrix_theme');
+  const systemTheme = window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  document.documentElement.dataset.theme = savedTheme || systemTheme;
+  updateThemeButton();
+  DOM.themeToggle?.addEventListener('click', () => {
+    const nextTheme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = nextTheme;
+    localStorage.setItem('chromamatrix_theme', nextTheme);
+    updateThemeButton();
+  });
+}
+
+function updateThemeButton() {
+  if (!DOM.themeToggle) return;
+  const isLight = document.documentElement.dataset.theme === 'light';
+  DOM.themeToggleIcon.textContent = isLight ? '🌙' : '☀️';
+  DOM.themeToggleLabel.textContent = isLight ? t('theme.dark') : t('theme.light');
 }
 
 function switchTab(tabId) {
@@ -303,11 +333,16 @@ function initStudio() {
     renderStudioMatrix();
   });
   DOM.eccLevel.addEventListener('change', () => renderStudioMatrix());
+  DOM.compressionMode.addEventListener('change', () => renderStudioMatrix());
   DOM.dotShape.addEventListener('change', () => renderStudioMatrix());
 
   DOM.cellSize.addEventListener('input', (e) => {
     DOM.cellSizeVal.textContent = `${e.target.value} px`;
     renderStudioMatrix();
+  });
+  DOM.previewSize.addEventListener('input', (e) => {
+    DOM.previewSizeVal.textContent = `${e.target.value} px`;
+    applyPreviewSize();
   });
 
   DOM.btnDownloadPng.addEventListener('click', downloadMatrixPng);
@@ -316,7 +351,14 @@ function initStudio() {
   DOM.btnCopyImage.addEventListener('click', copyMatrixImageToClipboard);
   DOM.btnPrintSheet.addEventListener('click', () => window.print());
 
+  applyPreviewSize();
   renderStudioPaletteBar();
+}
+
+function applyPreviewSize() {
+  if (!DOM.matrixPreviewStage || !DOM.previewSize) return;
+  DOM.matrixPreviewStage.style.width = `${DOM.previewSize.value}px`;
+  DOM.matrixPreviewStage.style.maxWidth = '100%';
 }
 
 function renderStudioPaletteBar() {
@@ -335,24 +377,30 @@ function renderStudioPaletteBar() {
 }
 
 async function renderStudioMatrix() {
+  const renderSerial = ++state.encoder.renderSerial;
   const text = DOM.inputText.value || ' ';
   const mode = DOM.paletteMode.value;
   const eccRatio = parseFloat(DOM.eccLevel.value);
   const cellSize = parseInt(DOM.cellSize.value, 10);
   const dotShape = DOM.dotShape.value;
+  const compression = DOM.compressionMode.value;
 
   try {
     const payloadBytes = new TextEncoder().encode(text);
-    const matrix = encodeChromaMatrix(payloadBytes, { mode, eccRatio });
+    const matrix = await encodeChromaMatrixAsync(payloadBytes, { mode, eccRatio, compression });
+    if (renderSerial !== state.encoder.renderSerial) return;
     state.encoder.currentMatrix = matrix;
 
     DOM.statGridSize.textContent = `${matrix.gridSize} x ${matrix.gridSize}`;
-    DOM.statPayloadLen.textContent = `${matrix.rawByteLength} B`;
+    DOM.statPayloadLen.textContent = matrix.compression === 'none'
+      ? `${matrix.rawByteLength} B`
+      : `${matrix.rawByteLength} B / ${matrix.originalByteLength} B`;
     DOM.statCodewordLen.textContent = `${matrix.totalCodewordBytes} B`;
     DOM.statDotCount.textContent = `${matrix.symbolCount} dots`;
 
     const svgString = matrixToSvg(matrix, { cellSize, dotShape, margin: 2 });
     DOM.matrixPreviewStage.innerHTML = svgString;
+    applyPreviewSize();
 
     attachSvgDotEvents(matrix, cellSize);
   } catch (err) {
@@ -665,14 +713,14 @@ function handleImageFile(file) {
 
 function loadSampleClean() {
   const text = 'Clean Sample: ChromaMatrix Optical Data on Paper';
-  const matrix = encodeChromaMatrix(text, { mode: PALETTE_MODES.PALETTE_16 });
+  const matrix = encodeChromaMatrix(text, { mode: PALETTE_MODES.PALETTE_8 });
   const buffer = matrixToRgbaBuffer(matrix, { cellSize: 16, margin: 2 });
   processInputImage(buffer);
 }
 
 function loadSampleNoisy() {
   const text = 'Noisy Photo: 4-Corner Homography Unwarping & Self-Calibrating Swatches';
-  const matrix = encodeChromaMatrix(text, { mode: PALETTE_MODES.PALETTE_16, eccRatio: 0.3 });
+  const matrix = encodeChromaMatrix(text, { mode: PALETTE_MODES.PALETTE_8, eccRatio: 0.3 });
   const buffer = matrixToRgbaBuffer(matrix, { cellSize: 16, margin: 2 });
 
   const noisy = {
@@ -700,7 +748,7 @@ async function loadSampleEncrypted() {
   const password = 'secretpassword';
   const encryptedBytes = await encryptPayload(plainBytes, password);
 
-  const matrix = encodeChromaMatrix(encryptedBytes, { mode: PALETTE_MODES.PALETTE_16 });
+  const matrix = encodeChromaMatrix(encryptedBytes, { mode: PALETTE_MODES.PALETTE_8 });
   const buffer = matrixToRgbaBuffer(matrix, { cellSize: 16, margin: 2 });
 
   DOM.decoderPassword.value = password;
@@ -762,7 +810,7 @@ function drawSourceQuadCanvas() {
 async function runDecoder() {
   if (!state.decoder.sourceImage || !state.decoder.corners) return;
 
-  const result = decodeChromaMatrix(state.decoder.sourceImage, {
+  const result = await decodeChromaMatrixAsync(state.decoder.sourceImage, {
     corners: state.decoder.corners
   });
 

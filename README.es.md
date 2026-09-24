@@ -15,7 +15,7 @@
 1. **Marco Perimetral Reservado Blanco y Negro**: Patrones de localización en las esquinas, pistas de sincronización y marcas de rango dinámico que reservan estrictamente el Negro Puro y Blanco de Papel para registro espacial y exposición.
 2. **Muestrario de Calibración en Hoja (*Self-Calibrating Swatches*)**: Muestras de la paleta impresas en los bordes para que el decodificador normalice las tintas CMYK de la impresora, la reflectancia del papel y los cambios de luz ambiental.
 3. **Modos de Paleta Multi-Color**:
-   - `PALETTE_8` (3 bits/punto): Ultra-alto contraste y máxima tolerancia a exteriores.
+   - `PALETTE_8` (3 bits/punto): Contrato predeterminado para Android/teléfono con espectros separados.
    - `PALETTE_16` (4 bits = 1 nibble/punto, 2 puntos/byte): Densidad y estabilidad óptima.
    - `PALETTE_64` (6 bits/punto): Empaquetado Base64 directo.
    - `ASCII_95` (ASCII Imprimible 32–126): Asignación directa 1 a 1 de caracteres.
@@ -24,6 +24,8 @@
 5. **Laboratorio de Fidelidad de Impresora y Escáner**: Mide desviaciones de color ($\Delta E$), genera matrices de confusión y recomienda automáticamente la mejor paleta para tu hardware.
 6. **Arquitectura Cero Dependencias**: Ejecutable directamente en el navegador (HTML5 Canvas/Webcam) y en Node.js para CLI y servidor.
 7. **Interfaz Bilingüe (EN / ES)**: Soporte completo en inglés y español con selector de idioma en vivo.
+8. **Compresión del Payload**: Compresión opcional GZIP o Brotli antes de Reed-Solomon para reducir el tamaño de la matriz con decodificación automática.
+9. **Firma Binaria del Formato**: Una línea horizontal B/N reservada deletrea `ChromaMatrix` en binario ASCII antes de iniciar la decodificación cromática, para que una AI identifique el formato y encuentre su repositorio fuente.
 
 ---
 
@@ -36,7 +38,14 @@ Para un análisis exhaustivo de sistemas relacionados (Microsoft HCCB, Zebra Ult
 
 ## Inicio Rápido
 
-### 1. Iniciar la Aplicación Web Interactiva
+### 1. Abrir Producción
+
+La aplicación real de producción está disponible en:
+👉 **<https://esail.ac.tamu.edu/pdata/>**
+
+El código fuente está en [`aoxilus/ChromaMatrix`](https://github.com/aoxilus/ChromaMatrix).
+
+### 2. Iniciar la Aplicación Web Interactiva Localmente
 ```bash
 npm start
 ```
@@ -46,7 +55,7 @@ Abre **`http://localhost:3000`** en tu navegador para acceder a:
 - **Wiki**: Propósito, flujo, capacidad, calibración de color y notas CIELAB.
 - **Prueba de impresión**: Genera y analiza objetivos de calibración de impresora.
 
-### 2. Comandos CLI en Terminal
+### 3. Comandos CLI en Terminal
 
 #### Codificar Texto o Archivo
 ```bash
@@ -67,10 +76,16 @@ npm run benchmark -- --generate target.png --mode TEST_64
 npm run benchmark -- --analyze target.png --mode TEST_64
 ```
 
-### 3. Ejecutar Pruebas Automatizadas
+### 4. Ejecutar Pruebas Automatizadas
 ```bash
 npm test
 ```
+
+### 5. Lector Android
+
+Abre [`android/`](android/) en Android Studio. Apunta a Android 11+ y empaqueta
+el lector web local, incluyendo subida, pegado y cámara. El valor seguro para
+teléfonos es `PALETTE_8`; el decodificador sigue leyendo las paletas existentes.
 
 ---
 
@@ -78,7 +93,7 @@ npm test
 
 Mejoras identificadas para futuras versiones de densidad y rendimiento:
 
-- [ ] **Pipelines de Compresión de Flujo (Gzip / Brotli / Zstandard / Deflate)**: Pre-compresión automática de texto antes de la asignación cromática, reduciendo el tamaño físico de la matriz entre 40% y 70% en textos largos.
+- [x] **Pipelines de Compresión de Flujo (Gzip / Brotli)**: Pre-compresión opcional antes de la asignación cromática, reduciendo el tamaño físico de la matriz en contenido repetitivo.
 - [ ] **Tokenización y Huffman Consciente del Idioma (BPE)**: Asignación de secuencias más cortas a palabras y caracteres de alta frecuencia según el idioma.
 - [ ] **Mapeo Binario-a-Símbolo Eficiente**: Optimización Base85 / Z85 para maximizar la entropía por punto físico.
 - [ ] **Deduplicación y Hash de Fragmentos**: Cabeceras de índice de contenido para documentos multi-página.

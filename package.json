@@ -25,7 +25,7 @@
   "author": "aoxilus (https://github.com/aoxilus)",
   "license": "CC-BY-NC-SA-4.0",
   "dependencies": {
+    "brotli-wasm": "^3.0.1",
     "pngjs": "^7.0.0"
-  },
-  "devDependencies": {}
+  }
 }

@@ -5,6 +5,7 @@
 import './ecc.test.js';
 import './palette.test.js';
 import './crypto.test.js';
+import './compression.test.js';
 import './roundtrip.test.js';
 
 console.log('\n==========================================');
