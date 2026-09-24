@@ -1,0 +1,16 @@
+# ChromaMatrix server deployment boundary.
+# Only index.html, src/core/, and src/web/ are required at /pdata/.
+.git/
+node_modules/
+docs/
+README*
+LICENSE
+DEPLOYMENT.md
+server.js
+package.json
+package-lock.json
+src/cli/
+test/
+test-*.js
+test_*.png
+dante_*

@@ -32,7 +32,7 @@ import {
 } from '../core/index.js';
 
 import { CameraManager } from './camera.js';
-import { initI18n, setLang, getLang, setVersion, getVersion, t, applyTranslations } from './i18n.js';
+import { initI18n, setLang, t } from './i18n.js?v=wiki-20260924';
 
 // Application State
 const state = {
@@ -163,19 +163,12 @@ function init() {
       setLang(e.target.value);
       renderStudioPaletteBar();
       renderStudioMatrix();
-      if (state.activeTab === 'capacity') renderCapacityTable();
-      if (state.activeTab === 'theory') renderTheoryExplorer();
+      if (state.activeTab === 'wiki') {
+        renderCapacityTable();
+        renderTheoryExplorer();
+      }
     });
   }
-
-  // V1 / V2 version toggle
-  document.querySelectorAll('.version-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      setVersion(btn.dataset.version);
-      // Auto-trigger preset change so sliders update
-      DOM.presetSelector.dispatchEvent(new Event('change'));
-    });
-  });
 
   initTabs();
   initStudio();
@@ -188,21 +181,25 @@ function init() {
 }
 
 function switchTab(tabId) {
-  const validTabs = ['studio', 'decoder', 'capacity', 'benchmark', 'theory'];
+  if (tabId === 'capacity' || tabId === 'theory') tabId = 'wiki';
+  const validTabs = ['studio', 'decoder', 'wiki', 'benchmark'];
   if (!validTabs.includes(tabId)) tabId = 'studio';
 
   DOM.tabs.forEach(b => {
     b.classList.toggle('active', b.dataset.tab === tabId);
   });
   DOM.tabPanels.forEach(p => {
-    p.classList.toggle('active', p.id === `tab-${tabId}`);
+    const isWikiPanel = tabId === 'wiki' && (p.id === 'tab-wiki' || p.id === 'tab-theory');
+    p.classList.toggle('active', p.id === `tab-${tabId}` || isWikiPanel);
   });
 
   state.activeTab = tabId;
   window.location.hash = '#' + tabId;
 
-  if (tabId === 'capacity') renderCapacityTable();
-  if (tabId === 'theory') renderTheoryExplorer();
+  if (tabId === 'wiki') {
+    renderCapacityTable();
+    renderTheoryExplorer();
+  }
 }
 
 function initTabs() {
@@ -236,78 +233,53 @@ function initStudio() {
   DOM.presetSelector.addEventListener('change', (e) => {
     const val = e.target.value;
 
-    // ── V1 Digital: PC → PC (perfect lossless, all palettes) ───────────────
-    if (val === 'v1-perfect') {
+    // Maximum density
+    if (val === 'maximum') {
       DOM.paletteMode.value = PALETTE_MODES.PALETTE_256;
       DOM.eccLevel.value = '0.15';
       DOM.dotShape.value = 'square';
       DOM.cellSize.value = '14';
       DOM.cellSizeVal.textContent = '14 px';
-    } else if (val === 'v1-high') {
+    } else if (val === 'dense') {
       DOM.paletteMode.value = PALETTE_MODES.PALETTE_64;
       DOM.eccLevel.value = '0.15';
       DOM.dotShape.value = 'rounded';
       DOM.cellSize.value = '16';
       DOM.cellSizeVal.textContent = '16 px';
-    } else if (val === 'v1-balanced') {
+    } else if (val === 'balanced') {
       DOM.paletteMode.value = PALETTE_MODES.PALETTE_16;
       DOM.eccLevel.value = '0.25';
       DOM.dotShape.value = 'circle';
       DOM.cellSize.value = '18';
       DOM.cellSizeVal.textContent = '18 px';
-    } else if (val === 'v1-text') {
+    } else if (val === 'text') {
       DOM.paletteMode.value = PALETTE_MODES.PALETTE_ASCII_95;
       DOM.eccLevel.value = '0.15';
       DOM.dotShape.value = 'rounded';
       DOM.cellSize.value = '16';
       DOM.cellSizeVal.textContent = '16 px';
 
-    // ── V2 Paper: Physical print (Phase 2 — safe palettes & ECC) ──────────
-    } else if (val === 'v2-euv') {
+    // Paper presets
+    } else if (val === 'photo') {
       DOM.paletteMode.value = PALETTE_MODES.PALETTE_16;
       DOM.eccLevel.value = '0.25';
       DOM.dotShape.value = 'circle';
       DOM.cellSize.value = '18';
       DOM.cellSizeVal.textContent = '18 px';
-    } else if (val === 'v2-phone') {
+    } else if (val === 'phone') {
       DOM.paletteMode.value = PALETTE_MODES.PALETTE_8;
       DOM.eccLevel.value = '0.35';
       DOM.dotShape.value = 'circle';
       DOM.cellSize.value = '22';
       DOM.cellSizeVal.textContent = '22 px';
-    } else if (val === 'v2-sticker') {
+    } else if (val === 'sticker') {
       DOM.paletteMode.value = PALETTE_MODES.PALETTE_8;
       DOM.eccLevel.value = '0.35';
       DOM.dotShape.value = 'circle';
       DOM.cellSize.value = '20';
       DOM.cellSizeVal.textContent = '20 px';
 
-    // ── Legacy / Manual ────────────────────────────────────────────────────
-    } else if (val === 'preset-sticker') {
-      DOM.paletteMode.value = PALETTE_MODES.PALETTE_16;
-      DOM.eccLevel.value = '0.35';
-      DOM.dotShape.value = 'circle';
-      DOM.cellSize.value = '18';
-      DOM.cellSizeVal.textContent = '18 px';
-    } else if (val === 'preset-backup') {
-      DOM.paletteMode.value = PALETTE_MODES.PALETTE_16;
-      DOM.eccLevel.value = '0.25';
-      DOM.dotShape.value = 'circle';
-      DOM.cellSize.value = '16';
-      DOM.cellSizeVal.textContent = '16 px';
-    } else if (val === 'preset-density') {
-      DOM.paletteMode.value = PALETTE_MODES.PALETTE_ASCII_95;
-      DOM.eccLevel.value = '0.15';
-      DOM.dotShape.value = 'rounded';
-      DOM.cellSize.value = '14';
-      DOM.cellSizeVal.textContent = '14 px';
     }
-
-    // Sync version toggle indicator based on selected preset
-    const isV2Preset = val.startsWith('v2-');
-    const isV1Preset = val.startsWith('v1-');
-    if (isV2Preset) setVersion('v2');
-    else if (isV1Preset) setVersion('v1');
 
     renderStudioPaletteBar();
     renderStudioMatrix();

@@ -41,11 +41,10 @@ Para un análisis exhaustivo de sistemas relacionados (Microsoft HCCB, Zebra Ult
 npm start
 ```
 Abre **`http://localhost:3000`** en tu navegador para acceder a:
-- **Matrix Studio (Codificador)**: Generador en tiempo real, inspector de celdas, exportación SVG/PNG/Impresión.
-- **Scan & Decode (Decodificador)**: Arrastrar y soltar archivos, pegar desde portapapeles (`Ctrl+V`) o cámara web en vivo.
-- **Reporte de Capacidad**: Tabla de límites físicos en hojas Carta y A4.
-- **Laboratorio de Impresora**: Generador de hojas de prueba y analizador de $\Delta E$.
-- **Ciencia del Color**: Visualizador de distancias perceptuales CIELAB.
+- **Codificar**: Genera matrices de puntos de color y expórtalas como SVG, PNG o impresión.
+- **Decodificar**: Lee una matriz subida, pegada o capturada con cámara.
+- **Wiki**: Propósito, flujo, capacidad, calibración de color y notas CIELAB.
+- **Prueba de impresión**: Genera y analiza objetivos de calibración de impresora.
 
 ### 2. Comandos CLI en Terminal
 

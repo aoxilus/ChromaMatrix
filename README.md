@@ -41,10 +41,10 @@ For an in-depth analysis of related systems (Microsoft HCCB, Zebra Ultracode, Tw
 npm start
 ```
 Open **`http://localhost:3000`** in your browser to access:
-- **Matrix Studio (Encoder)**: Real-time matrix generator, dot inspector, SVG/PNG/Print export.
-- **Scan & Decode**: File drag-and-drop, clipboard paste (`Ctrl+V`), or Live Webcam feed with interactive corner handles.
-- **Printer Fidelity Lab**: Color calibration test sheet generator and scanned target analyzer.
-- **Color Theory & Gamut**: Perceptual CIELAB distance visualizer.
+- **Encode**: Generate color-dot matrices and export them as SVG, PNG, or print.
+- **Decode**: Read an uploaded, pasted, or camera-captured matrix.
+- **Wiki**: Purpose, workflow, capacity, color calibration, and CIELAB notes.
+- **Print test**: Generate and analyze printer calibration targets.
 
 ### 2. Run CLI Commands
 
