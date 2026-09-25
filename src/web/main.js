@@ -972,36 +972,36 @@ function renderCapacityTable() {
     <table class="capacity-table">
       <thead>
         <tr>
-          <th>Capture & Scanner Tier</th>
-          <th>Dot Pitch</th>
-          <th>Grid Dimensions</th>
-          <th>8-Color (3-bit)</th>
-          <th>16-Color (4-bit / 1 Nibble)</th>
-          <th>ASCII-95 (1 Dot = 1 Char)</th>
-          <th>256-Color (8-bit)</th>
-          <th>Book Pages</th>
+          <th>${t('capacity.th.tier')}</th>
+          <th>${t('capacity.th.pitch')}</th>
+          <th>${t('capacity.th.grid')}</th>
+          <th>${t('capacity.th.palette8')}</th>
+          <th>${t('capacity.th.palette16')}</th>
+          <th>${t('capacity.th.ascii95')}</th>
+          <th>${t('capacity.th.palette256')}</th>
+          <th>${t('capacity.th.pages')}</th>
         </tr>
       </thead>
       <tbody>
   `;
 
-  report.tiers.forEach(t => {
-    const res8 = t.results[PALETTE_MODES.PALETTE_8];
-    const res16 = t.results[PALETTE_MODES.PALETTE_16];
-    const resAscii = t.results[PALETTE_MODES.PALETTE_ASCII_95];
-    const res256 = t.results[PALETTE_MODES.PALETTE_256];
+  report.tiers.forEach(tier => {
+    const res8 = tier.results[PALETTE_MODES.PALETTE_8];
+    const res16 = tier.results[PALETTE_MODES.PALETTE_16];
+    const resAscii = tier.results[PALETTE_MODES.PALETTE_ASCII_95];
+    const res256 = tier.results[PALETTE_MODES.PALETTE_256];
 
     html += `
       <tr>
         <td>
-          <strong>${t.tier.name}</strong><br>
-          <span style="font-size:0.75rem; color:var(--text-muted);">${t.tier.reliability}</span>
+          <strong>${t(`capacity.tier.${tier.tier.id}.name`) || tier.tier.name}</strong><br>
+          <span style="font-size:0.75rem; color:var(--text-muted);">${t(`capacity.tier.${tier.tier.id}.reliability`) || tier.tier.reliability}</span>
         </td>
-        <td><span class="capacity-badge">${t.tier.recommendedDotPitchMm} mm</span></td>
+        <td><span class="capacity-badge">${tier.tier.recommendedDotPitchMm} mm</span></td>
         <td style="font-family:var(--font-mono);">${res16.gridDimensions}</td>
         <td style="font-family:var(--font-mono); color:var(--accent-yellow);">${res8.netPayloadBytes.toLocaleString()} B</td>
         <td style="font-family:var(--font-mono); font-weight:700; color:var(--accent-cyan);">${res16.netPayloadBytes.toLocaleString()} B</td>
-        <td style="font-family:var(--font-mono); font-weight:700; color:var(--accent-emerald);">${resAscii.approxCharacters.toLocaleString()} chars</td>
+        <td style="font-family:var(--font-mono); font-weight:700; color:var(--accent-emerald);">${resAscii.netPayloadBytes.toLocaleString()} B</td>
         <td style="font-family:var(--font-mono); color:var(--accent-purple);">${res256.netPayloadBytes.toLocaleString()} B</td>
         <td><strong>~${res16.approxTypedPages}</strong> pages</td>
       </tr>
@@ -1142,10 +1142,10 @@ function renderTheoryExplorer() {
   container.innerHTML = '';
 
   const modes = [
-    { mode: PALETTE_MODES.PALETTE_8, title: '8-Color Palette (3 bits/dot)' },
-    { mode: PALETTE_MODES.PALETTE_16, title: '16-Color Palette (4 bits/dot - 1 Nibble)' },
-    { mode: PALETTE_MODES.PALETTE_64, title: '64-Color Palette (6 bits/dot - Base64)' },
-    { mode: PALETTE_MODES.PALETTE_ASCII_95, title: 'ASCII-95 Palette (1 Dot = 1 Character)' }
+    { mode: PALETTE_MODES.PALETTE_8, titleKey: 'theory.palette8' },
+    { mode: PALETTE_MODES.PALETTE_16, titleKey: 'theory.palette16' },
+    { mode: PALETTE_MODES.PALETTE_64, titleKey: 'theory.palette64' },
+    { mode: PALETTE_MODES.PALETTE_ASCII_95, titleKey: 'theory.paletteAscii95' }
   ];
 
   modes.forEach(m => {
@@ -1158,9 +1158,9 @@ function renderTheoryExplorer() {
 
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h4 style="font-size:1rem; color:#FFFFFF;">${m.title}</h4>
+        <h4 style="font-size:1rem; color:#FFFFFF;">${t(m.titleKey)}</h4>
         <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--accent-cyan);">
-          Min ΔE: ${analysis.minDeltaE.toFixed(1)} | Avg ΔE: ${analysis.avgDeltaE.toFixed(1)}
+          ${t('theory.minDeltaE')}: ${analysis.minDeltaE.toFixed(1)} | ${t('theory.avgDeltaE')}: ${analysis.avgDeltaE.toFixed(1)}
         </span>
       </div>
       <div class="palette-swatch-bar">

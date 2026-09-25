@@ -276,6 +276,15 @@ function rsCorrectErrors(msg, syndromes, lambda, errorPositions) {
  * Decode a received codeword block.
  */
 export function rsDecodeBlock(codeword, eccLen) {
+  if (eccLen < 1 || eccLen > codeword.length) {
+    return {
+      data: new Uint8Array(),
+      correctedErrors: 0,
+      success: false,
+      error: 'Invalid RS block length'
+    };
+  }
+
   const { syndromes, hasErrors } = rsCalculateSyndromes(codeword, eccLen);
   const dataLen = codeword.length - eccLen;
 
@@ -379,6 +388,11 @@ export function decodePayloadRS(blocksMeta, receivedStream) {
     const totalBlockLen = blockMeta.dataLen + blockMeta.eccLen;
     const blockCodeword = receivedStream.slice(streamOffset, streamOffset + totalBlockLen);
     streamOffset += totalBlockLen;
+
+    if (blockCodeword.length !== totalBlockLen) {
+      hasFailure = true;
+      continue;
+    }
 
     const result = rsDecodeBlock(blockCodeword, blockMeta.eccLen);
     if (!result.success) {

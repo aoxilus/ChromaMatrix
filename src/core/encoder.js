@@ -25,6 +25,7 @@ const BINARY_LOCATOR = createBinaryLocator();
 // Reserved color definitions
 export const COLOR_RESERVED_BLACK = '#000000';
 export const COLOR_RESERVED_WHITE = '#FFFFFF';
+export const MAX_GRID_SIZE = 253;
 
 // Cell types in matrix layout
 export const CELL_TYPES = {
@@ -360,6 +361,9 @@ export function calculateRequiredGridSize(symbolCount, paletteColorCount) {
     if (availableDataCells >= symbolCount) {
       return size;
     }
+    if (size >= MAX_GRID_SIZE) {
+      throw new Error(`Payload requires a grid larger than the supported ${MAX_GRID_SIZE} x ${MAX_GRID_SIZE} limit`);
+    }
     size += 2;
   }
 }
@@ -398,8 +402,13 @@ export function encodeChromaMatrix(dataInput, options = {}) {
   const palette = getPalette(mode);
 
   // 3. Grid size
-  const minSize = options.gridSize || calculateRequiredGridSize(dataSymbols.length, palette.length);
-  const gridSize = Math.max(minSize, calculateRequiredGridSize(dataSymbols.length, palette.length));
+  const requiredGridSize = calculateRequiredGridSize(dataSymbols.length, palette.length);
+  const minSize = options.gridSize || requiredGridSize;
+  let gridSize = Math.max(minSize, requiredGridSize);
+  if (gridSize % 2 === 0) gridSize++;
+  if (gridSize > MAX_GRID_SIZE) {
+    throw new Error(`Grid size ${gridSize} exceeds the supported ${MAX_GRID_SIZE} x ${MAX_GRID_SIZE} limit`);
+  }
 
   // 4. Initialize grid
   const grid = Array.from({ length: gridSize }, () =>

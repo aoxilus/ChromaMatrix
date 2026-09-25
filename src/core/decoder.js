@@ -15,7 +15,8 @@ import {
   crc16,
   getHeaderCoordinates,
   getCalibrationCoordinates,
-  isCellReserved
+  isCellReserved,
+  MAX_GRID_SIZE
 } from './encoder.js';
 import { rgbToLab, normalizeWhiteBalance } from './colorspace.js';
 import { compressionModeFromId, decompressBytes } from './compression.js';
@@ -430,7 +431,10 @@ export function decodeChromaMatrix(imageData, options = {}) {
 
   const candidateGridSizes = options.gridSize
     ? [options.gridSize]
-    : Array.from({ length: 115 }, (_, i) => 25 + i * 2); // 25 to 253!
+    : Array.from(
+      { length: Math.floor((MAX_GRID_SIZE - 25) / 2) + 1 },
+      (_, i) => 25 + i * 2
+    );
 
   let bestResult = null;
 
@@ -482,6 +486,13 @@ export function decodeChromaMatrix(imageData, options = {}) {
       const blockEccLen = headerBytes[10];
 
       if (gridSize !== testGridSize) continue;
+      if (blockCount < 1 ||
+          blockEccLen < 1 ||
+          blockDataLen + blockEccLen > 255 ||
+          (payloadLength > 0 && blockDataLen < 1) ||
+          (blockDataLen > 0 && Math.ceil(payloadLength / blockDataLen) > blockCount)) {
+        continue;
+      }
 
       // Build RS block metadata candidates (Uniform vs Proportional Tail)
       const candidateMetaConfigs = [];

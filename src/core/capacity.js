@@ -53,6 +53,11 @@ export const OPTICAL_CAPTURE_TIERS = [
   }
 ];
 
+// ASCII-95 stores eight bytes in ten symbols. This is an approximate physical
+// capacity, so use its actual fixed-block efficiency rather than claiming one
+// character per dot.
+export const ASCII95_BITS_PER_DOT = 6.4;
+
 /**
  * Calculate exact characters and byte capacity for a given paper size, dot pitch, and palette mode.
  */
@@ -70,24 +75,15 @@ export function calculateSheetCapacity(paperKey = 'LETTER', dotPitchMm = 0.90, m
 
   // Bits per dot by mode
   let bitsPerDot = 4;
-  let isDirectChar = false;
 
   if (mode === PALETTE_MODES.PALETTE_8) bitsPerDot = 3;
   else if (mode === PALETTE_MODES.PALETTE_16) bitsPerDot = 4;
   else if (mode === PALETTE_MODES.PALETTE_64) bitsPerDot = 6;
-  else if (mode === PALETTE_MODES.PALETTE_ASCII_95) {
-    bitsPerDot = 8;
-    isDirectChar = true;
-  }
+  else if (mode === PALETTE_MODES.PALETTE_ASCII_95) bitsPerDot = ASCII95_BITS_PER_DOT;
   else if (mode === PALETTE_MODES.PALETTE_256) bitsPerDot = 8;
 
   // Raw data capacity in bytes
-  let rawCodewordBytes;
-  if (isDirectChar) {
-    rawCodewordBytes = availableDataDots; // 1 dot = 1 char
-  } else {
-    rawCodewordBytes = Math.floor((availableDataDots * bitsPerDot) / 8);
-  }
+  const rawCodewordBytes = Math.floor((availableDataDots * bitsPerDot) / 8);
 
   // Net usable payload after Reed-Solomon Error Correction
   const netPayloadBytes = Math.floor(rawCodewordBytes / (1 + eccRatio));

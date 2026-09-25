@@ -61,6 +61,12 @@ console.log('--- Running Crypto & Capacity Tests ---');
   if (a4Flatbed.netPayloadBytes < 200000) {
     throw new Error(`A4 flatbed scanner capacity too low: ${a4Flatbed.netPayloadBytes}`);
   }
+
+  const asciiCapacity = calculateSheetCapacity('LETTER', 0.90, PALETTE_MODES.PALETTE_ASCII_95, 0.5);
+  const expectedAsciiRawBytes = Math.floor(asciiCapacity.availableDataDots * 6.4 / 8);
+  if (asciiCapacity.rawCodewordBytes !== expectedAsciiRawBytes) {
+    throw new Error('ASCII_95 capacity must use reversible base95 efficiency, not 1 byte/dot');
+  }
   console.log('✓ Test 2: Sheet capacity calculations passed');
 }
 

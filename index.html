@@ -81,7 +81,7 @@
                   <option value="maximum">Maximum · 256 colors · 8 bits/dot</option>
                   <option value="dense">Dense · 64 colors · 6 bits/dot</option>
                   <option value="balanced" selected>Balanced · 16 colors · 4 bits/dot</option>
-                  <option value="text">Text · ASCII-95 · 1 char/dot</option>
+                  <option value="text">Text · ASCII-95 · binary-safe base95</option>
                 </optgroup>
                 <optgroup label="Paper">
                   <option value="photo">Photo printer · 16 colors · 0.5mm</option>
@@ -383,6 +383,11 @@
               <h3 data-i18n="wiki.compression.title">Payload compression</h3>
               <p data-i18n="wiki.compression.text">Brotli or GZIP compresses the payload before Reed-Solomon, reducing the matrix size while preserving automatic decompression during decode.</p>
             </div>
+            <div class="theory-item">
+              <div class="theory-icon">🛡️</div>
+              <h3 data-i18n="wiki.ecc.title">ECC and binary safety</h3>
+              <p data-i18n="wiki.ecc.text">The default is 50% parity. ASCII-95 uses reversible base95 packing for arbitrary bytes; 256 colors maximize digital density but are less reliable in physical captures.</p>
+            </div>
           </div>
 
           <!-- Capacity Paper Selector Bar -->
@@ -399,8 +404,9 @@
               <label for="capacity-ecc-select" data-i18n="capacity.ecc.label">ECC</label>
               <select id="capacity-ecc-select">
                 <option value="0.15" data-i18n="opt.ecc15">15%</option>
-                <option value="0.25" data-i18n="opt.ecc25" selected>25%</option>
+                <option value="0.25" data-i18n="opt.ecc25">25%</option>
                 <option value="0.35" data-i18n="opt.ecc35">35%</option>
+                <option value="0.50" data-i18n="opt.ecc50" selected>50%</option>
               </select>
             </div>
           </div>
@@ -415,16 +421,16 @@
             <div class="theory-item">
               <div class="theory-icon">🏷️</div>
               <h3 data-i18n="preset.sticker">Outdoor Sticker & UV Tag Print</h3>
-              <p><strong>Pitch:</strong> 0.90 mm<br>
-              <strong>Sticker:</strong> ~4.2 KB<br>
-              <strong>Sheet:</strong> ~22 KB<br>
+              <p data-i18n="capacity.card.sticker.text"><strong>Pitch:</strong> 0.90 mm<br>
+              <strong>Letter:</strong> ~15.2 KB<br>
+              <strong>A4:</strong> ~15.8 KB<br>
               35% ECC for weather, scratches, and fading.</p>
             </div>
 
             <div class="theory-item">
               <div class="theory-icon">📄</div>
               <h3 data-i18n="preset.backup">Paper Cold Storage Backup</h3>
-              <p><strong>Pitch:</strong> 0.50 mm<br>
+              <p data-i18n="capacity.card.backup.text"><strong>Pitch:</strong> 0.50 mm<br>
               <strong>Letter:</strong> ~71 KB<br>
               <strong>A4:</strong> ~74 KB<br>
               For documents, code, and recovery keys.</p>
@@ -432,8 +438,8 @@
 
             <div class="theory-item">
               <div class="theory-icon">🖨️</div>
-              <h3>Flatbed Scanner (300 DPI)</h3>
-              <p><strong>Pitch:</strong> 0.25 mm<br>
+              <h3 data-i18n="capacity.card.flatbed300.title">Flatbed Scanner (300 DPI)</h3>
+              <p data-i18n="capacity.card.flatbed300.text"><strong>Pitch:</strong> 0.25 mm<br>
               <strong>Letter:</strong> ~283 KB<br>
               <strong>A4:</strong> ~295 KB<br>
               Best with a flatbed scanner.</p>
@@ -441,11 +447,11 @@
 
             <div class="theory-item">
               <div class="theory-icon">⚡</div>
-              <h3>High-Res Flatbed (600 - 1200 DPI)</h3>
-              <p><strong>Pitch:</strong> 0.15 mm<br>
+              <h3 data-i18n="capacity.card.flatbed600.title">High-Res Flatbed (600 - 1200 DPI)</h3>
+              <p data-i18n="capacity.card.flatbed600.text"><strong>Pitch:</strong> 0.15 mm<br>
               <strong>Letter:</strong> ~787 KB<br>
               <strong>A4:</strong> ~820 KB<br>
-              Theoretical maximum with 256 colors.</p>
+              Reference capacity with 16 colors; 256 colors is a fragile digital ceiling.</p>
             </div>
           </div>
         </div>
@@ -466,12 +472,12 @@
                 <div class="step-num">1</div>
                 <div class="step-content">
                   <h4 data-i18n="benchmark.step.generate">1. Generate a target</h4>
-                  <p>Print it on the paper or sticker you will use.</p>
+                  <p data-i18n="benchmark.step.generate.text">Print it on the paper or sticker you will use.</p>
                   <div class="form-row" style="margin-top: 8px;">
                     <select id="benchmark-test-mode" class="flex-1">
-                      <option value="TEST_16" selected>16 colors · reliable</option>
-                      <option value="TEST_64">64 colors · full range</option>
-                      <option value="TEST_256">256 colors · dense</option>
+                      <option value="TEST_16" selected data-i18n="benchmark.mode.test16">16 colors · reliable</option>
+                      <option value="TEST_64" data-i18n="benchmark.mode.test64">64 colors · full range</option>
+                      <option value="TEST_256" data-i18n="benchmark.mode.test256">256 colors · dense</option>
                     </select>
                     <button class="btn btn-primary" id="btn-gen-benchmark-target" data-i18n="benchmark.btn.generate">Generate</button>
                   </div>
@@ -482,10 +488,10 @@
                 <div class="step-num">2</div>
                 <div class="step-content">
                   <h4 data-i18n="benchmark.step.scan">2. Scan the target</h4>
-                  <p>Use the same camera or scanner as the real data.</p>
+                  <p data-i18n="benchmark.step.scan.text">Use the same camera or scanner as the real data.</p>
                   <div class="drop-zone" id="benchmark-drop-zone" style="margin-top: 8px; padding: 20px;">
                     <p data-i18n="benchmark.dropzone.title">Drop or select the scan</p>
-                    <button class="link-btn" id="btn-browse-benchmark" style="display:none;">browse</button>
+                    <button class="link-btn" id="btn-browse-benchmark" data-i18n="benchmark.dropzone.browse" style="display:none;">browse</button>
                     <input type="file" id="file-input-benchmark" accept="image/*" style="display:none">
                   </div>
                 </div>
@@ -500,16 +506,16 @@
           <!-- Right Column: Fidelity Report & Gamut Heatmap -->
           <div class="card preview-card">
             <div class="card-header">
-              <h2 data-i18n="benchmark.header.title">Calibration result</h2>
-              <span class="subtitle" data-i18n="benchmark.header.subtitle">Drift, separation, and a safer palette.</span>
+              <h2 data-i18n="benchmark.result.title">Calibration result</h2>
+              <span class="subtitle" data-i18n="benchmark.result.subtitle">Drift, separation, and a safer palette.</span>
             </div>
 
             <!-- Recommendation Alert -->
             <div class="recommendation-box" id="benchmark-recommendation-box">
               <div class="rec-icon" id="bench-rating-badge">🔬</div>
               <div class="rec-details">
-                <h4 id="bench-recommendation-title">No scan yet</h4>
-                <p id="bench-recommendation-desc">Generate and scan a target to measure color drift.</p>
+                <h4 id="bench-recommendation-title" data-i18n="benchmark.result.empty.title">No scan yet</h4>
+                <p id="bench-recommendation-desc" data-i18n="benchmark.result.empty.text">Generate and scan a target to measure color drift.</p>
               </div>
             </div>
 
@@ -552,33 +558,33 @@
           <div class="theory-grid">
             <div class="theory-item">
               <div class="theory-icon">📐</div>
-              <h3>CIELAB distance</h3>
-              <p><strong>ΔE</strong> estimates how different two captured colors look, even under changing light.</p>
+              <h3 data-i18n="wiki.lab.cielab.title">CIELAB distance</h3>
+              <p data-i18n="wiki.lab.cielab.text"><strong>ΔE</strong> estimates how different two captured colors look, even under changing light.</p>
             </div>
 
             <div class="theory-item">
               <div class="theory-icon">🎯</div>
-              <h3>Alignment markers</h3>
-              <p><strong>Black</strong> and <strong>white</strong> stay reserved for the four corners and timing tracks.</p>
+              <h3 data-i18n="wiki.lab.alignment.title">Alignment markers</h3>
+              <p data-i18n="wiki.lab.alignment.text"><strong>Black</strong> and <strong>white</strong> stay reserved for the four corners and timing tracks.</p>
             </div>
 
             <div class="theory-item">
               <div class="theory-icon">🧪</div>
-              <h3>Calibration swatches</h3>
-              <p>Known colors are printed with the matrix so the reader can measure printer fade and lighting drift.</p>
+              <h3 data-i18n="wiki.lab.swatches.title">Calibration swatches</h3>
+              <p data-i18n="wiki.lab.swatches.text">Known colors are printed with the matrix so the reader can measure printer fade and lighting drift.</p>
             </div>
 
             <div class="theory-item">
               <div class="theory-icon">🛡️</div>
-              <h3>Reed-Solomon ECC</h3>
-              <p>Extra symbols help recover data from scratches, stains, and missing cells.</p>
+              <h3 data-i18n="wiki.lab.rs.title">Reed-Solomon ECC</h3>
+              <p data-i18n="wiki.lab.rs.text">Extra symbols help recover data from scratches, stains, and missing cells.</p>
             </div>
           </div>
 
           <!-- Interactive Color Distance Explorer -->
           <div class="palette-explorer-card" style="margin-top: 24px;">
-            <h3>Palette separation</h3>
-            <p style="color:var(--text-secondary); margin-bottom: 16px; font-size: 0.9rem;">
+            <h3 data-i18n="wiki.lab.palette.title">Palette separation</h3>
+            <p data-i18n="wiki.lab.palette.text" style="color:var(--text-secondary); margin-bottom: 16px; font-size: 0.9rem;">
               Click a swatch to compare its ΔE distance to the other colors.
             </p>
             <div id="theory-palette-explorer"></div>
