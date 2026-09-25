@@ -10,6 +10,8 @@
 
 ---
 
+![ChromaMatrix encoder preview](assets/chromamatrix-preview.png)
+
 ## Key Features
 
 1. **Reserved Black & White Framing**: QR-style nested square corner fiducials, timing tracks, and dynamic range calibration targets strictly reserve pure Black and Paper White for spatial/exposure registration.

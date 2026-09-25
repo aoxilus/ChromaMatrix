@@ -10,6 +10,8 @@
 
 ---
 
+![Vista previa del encoder de ChromaMatrix](assets/chromamatrix-preview.png)
+
 ## Características Principales
 
 1. **Marco Perimetral Reservado Blanco y Negro**: Patrones de localización en las esquinas, pistas de sincronización y marcas de rango dinámico que reservan estrictamente el Negro Puro y Blanco de Papel para registro espacial y exposición.
