@@ -18,7 +18,7 @@
    - `PALETTE_8` (3 bits/dot): Default Android/phone contract with separated spectra.
    - `PALETTE_16` (4 bits = 1 nibble/dot, 2 dots/byte): Optimal density and stability.
    - `PALETTE_64` (6 bits/dot): Base64 symbol packing.
-   - `ASCII_95` (Printable ASCII 32–126): Direct 1-to-1 character assignment.
+   - `ASCII_95` (95 symbols): Binary-safe base-95 packing for arbitrary payload bytes.
    - `PALETTE_256` (8 bits / 1 byte per dot): Maximum byte density.
 4. **Reed-Solomon Error Correction Code (RS-ECC)**: Full Galois Field $GF(2^8)$ arithmetic with Berlekamp-Massey algorithm to automatically recover from paper smudges, print bleed, or optical glare.
 5. **Printer & Scanner Fidelity Benchmark Lab**: Measures physical color shifts ($\Delta E$), confusion matrices, and recommends the optimal palette for your specific printer and camera setup.
@@ -86,6 +86,22 @@ npm test
 Open [`android/`](android/) in Android Studio. It targets Android 11+ and
 packages the local web reader, including upload, paste, and camera decoding.
 The phone-safe default is `PALETTE_8`; existing palette modes remain readable.
+
+### Verified encode/decode contract
+
+- `ASCII_95` uses reversible base-95 packing and preserves arbitrary binary
+  Reed-Solomon codewords through a downloaded PNG.
+- The default/max ECC setting is 50% parity: 160 data bytes plus 80 parity
+  symbols per block, correcting up to 40 corrupted symbols in that block.
+- `npm test` covers real PNG serialization and decoding for all five palettes
+  and all three compression modes.
+- Brotli remains the general-purpose density choice. A 256-color palette is
+  denser digitally but is much less reliable under physical color drift.
+
+### Verified status
+
+The automated PNG matrix passes 15/15 cases. For handheld camera capture,
+`PALETTE_8` and `PALETTE_16` remain the recommended modes.
 
 ---
 

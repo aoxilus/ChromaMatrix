@@ -7,7 +7,7 @@
  */
 
 import { PALETTE_MODES, getPalette, classifyColor } from './palette.js';
-import { decodePayloadRS } from './reedsolomon.js';
+import { decodePayloadRS, RS_MAX_ECC_SYMBOLS } from './reedsolomon.js';
 import {
   symbolsToBytes,
   getPaletteModeFromId,
@@ -493,9 +493,8 @@ export function decodeChromaMatrix(imageData, options = {}) {
         const dLen = Math.min(blockDataLen, bytesLeftProp);
         let ecc = blockEccLen;
         if (b === blockCount - 1 && dLen < blockDataLen) {
-          const eccRatio = (blockEccLen / 2) / blockDataLen;
-          ecc = Math.max(4, Math.min(64, Math.round(dLen * eccRatio) * 2));
-          if (ecc % 2 !== 0) ecc++;
+          const eccRatio = blockDataLen > 0 ? blockEccLen / blockDataLen : 0;
+          ecc = Math.max(4, Math.min(RS_MAX_ECC_SYMBOLS, Math.round(dLen * eccRatio)));
         }
         metaProportional.push({ dataLen: dLen, eccLen: ecc });
         bytesLeftProp -= dLen;
@@ -515,7 +514,7 @@ export function decodeChromaMatrix(imageData, options = {}) {
       // Config 3: If blockCount > 1 and tail block is shorter, generate sweep of even ECCs for tail
       if (blockCount > 1 && payloadLength % blockDataLen !== 0) {
         const tailDataLen = payloadLength % blockDataLen;
-        for (let testEcc = 4; testEcc <= blockEccLen; testEcc += 2) {
+        for (let testEcc = 4; testEcc <= blockEccLen; testEcc++) {
           const metaSweep = [];
           let rem = payloadLength;
           for (let b = 0; b < blockCount; b++) {

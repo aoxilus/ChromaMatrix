@@ -7,7 +7,7 @@
  */
 
 import { PALETTE_MODES, getPalette } from './palette.js';
-import { encodePayloadRS } from './reedsolomon.js';
+import { DEFAULT_ECC_RATIO, encodePayloadRS } from './reedsolomon.js';
 import { hexToRgb } from './colorspace.js';
 import {
   COMPRESSION_MODES,
@@ -149,7 +149,94 @@ export function isCellReserved(gx, gy, gridSize, calibCount) {
 }
 
 /**
- * Convert byte payload into a stream of palette symbol indices based on mode
+ * ASCII-95 uses fixed-size base-95 chunks instead of pretending arbitrary
+ * binary bytes are printable characters. Eight bytes fit in ten symbols
+ * because 95^10 >= 256^8; the final chunk uses the smallest reversible
+ * representation for its byte length.
+ */
+const BASE95 = 95n;
+const BASE95_CHUNK_BYTES = 8;
+
+function base95SymbolCount(byteCount) {
+  const target = 1n << (8n * BigInt(byteCount));
+  let capacity = 1n;
+  let count = 0;
+  do {
+    capacity *= BASE95;
+    count++;
+  } while (capacity < target);
+  return count;
+}
+
+function bytesToBase95Symbols(bytes) {
+  const symbols = [];
+  for (let offset = 0; offset < bytes.length; offset += BASE95_CHUNK_BYTES) {
+    const byteCount = Math.min(BASE95_CHUNK_BYTES, bytes.length - offset);
+    let value = 0n;
+    for (let i = 0; i < byteCount; i++) {
+      value = (value << 8n) | BigInt(bytes[offset + i]);
+    }
+
+    const symbolCount = base95SymbolCount(byteCount);
+    const chunk = new Array(symbolCount).fill(0);
+    for (let i = symbolCount - 1; i >= 0; i--) {
+      chunk[i] = Number(value % BASE95);
+      value /= BASE95;
+    }
+    symbols.push(...chunk);
+  }
+  return symbols;
+}
+
+function base95SymbolsToBytes(symbols, expectedByteLength) {
+  const bytes = [];
+  let symbolOffset = 0;
+  let byteOffset = 0;
+  const targetLength = expectedByteLength ?? 0;
+
+  while (byteOffset < targetLength && symbolOffset < symbols.length) {
+    const byteCount = Math.min(BASE95_CHUNK_BYTES, targetLength - byteOffset);
+    const symbolCount = base95SymbolCount(byteCount);
+    if (symbolOffset + symbolCount > symbols.length) break;
+
+    let value = 0n;
+    for (let i = 0; i < symbolCount; i++) {
+      value = value * BASE95 + BigInt(symbols[symbolOffset + i] % 95);
+    }
+
+    const chunk = new Uint8Array(byteCount);
+    for (let i = byteCount - 1; i >= 0; i--) {
+      chunk[i] = Number(value & 0xFFn);
+      value >>= 8n;
+    }
+    bytes.push(...chunk);
+    symbolOffset += symbolCount;
+    byteOffset += byteCount;
+  }
+
+  return new Uint8Array(bytes);
+}
+
+function base95ByteLengthFromSymbolLength(symbolLength) {
+  const fullChunks = Math.floor(symbolLength / base95SymbolCount(BASE95_CHUNK_BYTES));
+  const remainder = symbolLength % base95SymbolCount(BASE95_CHUNK_BYTES);
+  let byteLength = fullChunks * BASE95_CHUNK_BYTES;
+
+  for (let byteCount = 1; byteCount < BASE95_CHUNK_BYTES; byteCount++) {
+    if (base95SymbolCount(byteCount) === remainder) {
+      byteLength += byteCount;
+      break;
+    }
+  }
+  return byteLength;
+}
+
+/**
+ * Convert byte payload into a stream of palette symbol indices based on mode.
+ *
+ * The ASCII-95 mode is a binary-safe base-95 transport. It is not a direct
+ * byte-to-printable-character mapping because Reed-Solomon parity is arbitrary
+ * binary data.
  */
 export function bytesToSymbols(bytes, mode) {
   const symbols = [];
@@ -188,11 +275,7 @@ export function bytesToSymbols(bytes, mode) {
       symbols.push((bitBuffer << (6 - bitsInBuffer)) & 0x3F);
     }
   } else if (mode === PALETTE_MODES.PALETTE_ASCII_95) {
-    for (let i = 0; i < bytes.length; i++) {
-      let c = bytes[i];
-      if (c < 32 || c > 126) c = 32;
-      symbols.push(c - 32);
-    }
+    symbols.push(...bytesToBase95Symbols(bytes));
   } else if (mode === PALETTE_MODES.PALETTE_256) {
     for (let i = 0; i < bytes.length; i++) {
       symbols.push(bytes[i]);
@@ -240,10 +323,12 @@ export function symbolsToBytes(symbols, mode, expectedByteLength) {
       }
     }
   } else if (mode === PALETTE_MODES.PALETTE_ASCII_95) {
-    for (let i = 0; i < symbols.length; i++) {
-      bytes.push((symbols[i] % 95) + 32);
-      if (expectedByteLength && bytes.length >= expectedByteLength) break;
-    }
+    // The header gives the exact codeword length, which is required to
+    // distinguish the shorter final base-95 chunk from padding cells.
+    const byteLength = expectedByteLength === undefined
+      ? base95ByteLengthFromSymbolLength(symbols.length)
+      : expectedByteLength;
+    return base95SymbolsToBytes(symbols, byteLength);
   } else if (mode === PALETTE_MODES.PALETTE_256) {
     for (let i = 0; i < symbols.length; i++) {
       bytes.push(symbols[i] & 0xFF);
@@ -286,7 +371,7 @@ export function encodeChromaMatrix(dataInput, options = {}) {
   // The default contract targets phone cameras: fewer, spectrally separated
   // colors are more reliable than maximum density at low capture resolution.
   const mode = options.mode || PALETTE_MODES.PALETTE_8;
-  const eccRatio = options.eccRatio !== undefined ? options.eccRatio : 0.25;
+  const eccRatio = options.eccRatio !== undefined ? options.eccRatio : DEFAULT_ECC_RATIO;
   const compressionId = options.compressionId || 0;
 
   let rawBytes;

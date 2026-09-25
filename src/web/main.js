@@ -8,6 +8,7 @@
 
 import {
   PALETTE_MODES,
+  DEFAULT_ECC_RATIO,
   getPalette,
   analyzePaletteSeparation,
   rgbToLab,
@@ -41,7 +42,7 @@ const state = {
   encoder: {
     text: '',
     mode: PALETTE_MODES.PALETTE_8,
-    eccRatio: 0.25,
+    eccRatio: DEFAULT_ECC_RATIO,
     dotShape: 'circle',
     cellSize: 16,
     isEncrypted: false,
@@ -63,7 +64,7 @@ const state = {
   },
   capacity: {
     paperKey: 'LETTER',
-    eccRatio: 0.25
+    eccRatio: DEFAULT_ECC_RATIO
   }
 };
 
@@ -266,7 +267,7 @@ function initStudio() {
     // Maximum density
     if (val === 'maximum') {
       DOM.paletteMode.value = PALETTE_MODES.PALETTE_256;
-      DOM.eccLevel.value = '0.15';
+      DOM.eccLevel.value = '0.50';
       DOM.dotShape.value = 'square';
       DOM.cellSize.value = '14';
       DOM.cellSizeVal.textContent = '14 px';

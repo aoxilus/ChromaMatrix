@@ -7,6 +7,7 @@
  */
 
 import { PALETTE_MODES } from './palette.js';
+import { DEFAULT_ECC_RATIO } from './reedsolomon.js';
 
 export const PAPER_SIZES = {
   LETTER: {
@@ -55,7 +56,7 @@ export const OPTICAL_CAPTURE_TIERS = [
 /**
  * Calculate exact characters and byte capacity for a given paper size, dot pitch, and palette mode.
  */
-export function calculateSheetCapacity(paperKey = 'LETTER', dotPitchMm = 0.90, mode = PALETTE_MODES.PALETTE_16, eccRatio = 0.25) {
+export function calculateSheetCapacity(paperKey = 'LETTER', dotPitchMm = 0.90, mode = PALETTE_MODES.PALETTE_16, eccRatio = DEFAULT_ECC_RATIO) {
   const paper = PAPER_SIZES[paperKey] || PAPER_SIZES.LETTER;
 
   const cols = Math.floor(paper.printableWidthMm / dotPitchMm);
@@ -114,7 +115,7 @@ export function calculateSheetCapacity(paperKey = 'LETTER', dotPitchMm = 0.90, m
 /**
  * Generate a complete multi-tier capacity report matrix
  */
-export function generateCapacityReport(paperKey = 'LETTER', eccRatio = 0.25) {
+export function generateCapacityReport(paperKey = 'LETTER', eccRatio = DEFAULT_ECC_RATIO) {
   const paper = PAPER_SIZES[paperKey] || PAPER_SIZES.LETTER;
   const tiers = OPTICAL_CAPTURE_TIERS.map(tier => {
     const modes = [

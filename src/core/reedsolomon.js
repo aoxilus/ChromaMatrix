@@ -9,6 +9,13 @@
 const PRIMITIVE_POLYNOMIAL = 0x11d;
 const GF_SIZE = 256;
 
+// Keep every RS codeword below the 255-symbol limit of GF(256), while
+// allowing the public 50% ECC setting to be real rather than capped at 64.
+export const DEFAULT_ECC_RATIO = 0.5;
+export const MAX_ECC_RATIO = 0.5;
+export const RS_MAX_BLOCK_DATA = 160;
+export const RS_MAX_ECC_SYMBOLS = 80;
+
 // Precompute Galois Field tables
 const EXP_TABLE = new Uint8Array(GF_SIZE * 2);
 const LOG_TABLE = new Uint8Array(GF_SIZE);
@@ -313,22 +320,37 @@ export function rsDecodeBlock(codeword, eccLen) {
 /**
  * High-level Chunked RS Encoding for arbitrary length byte payloads.
  */
-export function encodePayloadRS(payloadBytes, eccRatio = 0.25) {
-  const maxBlockSize = 180;
+export function encodePayloadRS(payloadBytes, eccRatio = DEFAULT_ECC_RATIO) {
+  const maxBlockSize = RS_MAX_BLOCK_DATA;
   const blocks = [];
-  let offset = 0;
+  const normalizedRatio = Number.isFinite(eccRatio)
+    ? Math.max(0, Math.min(MAX_ECC_RATIO, eccRatio))
+    : DEFAULT_ECC_RATIO;
 
-  let uniformEccLen = Math.max(4, Math.min(64, Math.round(maxBlockSize * eccRatio) * 2));
-  if (uniformEccLen % 2 !== 0) uniformEccLen++;
+  // A final one-byte block with the full parity length wastes space. Spread
+  // the payload evenly across the required blocks so the tail has comparable
+  // protection and the metadata remains compact.
+  const blockCount = Math.max(1, Math.ceil(payloadBytes.length / maxBlockSize));
+  const blockDataSize = payloadBytes.length === 0
+    ? 0
+    : Math.ceil(payloadBytes.length / blockCount);
+  const uniformEccLen = Math.max(
+    4,
+    Math.min(RS_MAX_ECC_SYMBOLS, Math.round(blockDataSize * normalizedRatio))
+  );
 
-  if (payloadBytes.length <= maxBlockSize) {
-    uniformEccLen = Math.max(4, Math.min(64, Math.round(payloadBytes.length * eccRatio) * 2));
-    if (uniformEccLen % 2 !== 0) uniformEccLen++;
+  if (payloadBytes.length === 0) {
+    return [{
+      dataLen: 0,
+      eccLen: uniformEccLen,
+      blockBytes: rsEncodeBlock(new Uint8Array(), uniformEccLen)
+    }];
   }
 
+  let offset = 0;
   while (offset < payloadBytes.length) {
     const remaining = payloadBytes.length - offset;
-    const chunkSize = Math.min(maxBlockSize, remaining);
+    const chunkSize = Math.min(blockDataSize, remaining);
 
     const chunk = payloadBytes.slice(offset, offset + chunkSize);
     const encodedBlock = rsEncodeBlock(chunk, uniformEccLen);

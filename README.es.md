@@ -18,7 +18,7 @@
    - `PALETTE_8` (3 bits/punto): Contrato predeterminado para Android/teléfono con espectros separados.
    - `PALETTE_16` (4 bits = 1 nibble/punto, 2 puntos/byte): Densidad y estabilidad óptima.
    - `PALETTE_64` (6 bits/punto): Empaquetado Base64 directo.
-   - `ASCII_95` (ASCII Imprimible 32–126): Asignación directa 1 a 1 de caracteres.
+   - `ASCII_95` (95 símbolos): Empaquetado base95 seguro para bytes arbitrarios.
    - `PALETTE_256` (8 bits / 1 byte por punto): Máxima densidad física para escáneres.
 4. **Código de Corrección de Errores Reed-Solomon (RS-ECC)**: Aritmética completa en el Campo de Galois $GF(2^8)$ con algoritmo Berlekamp-Massey para recuperar datos dañados por manchas, arrugas o reflejos.
 5. **Laboratorio de Fidelidad de Impresora y Escáner**: Mide desviaciones de color ($\Delta E$), genera matrices de confusión y recomienda automáticamente la mejor paleta para tu hardware.
@@ -86,6 +86,23 @@ npm test
 Abre [`android/`](android/) en Android Studio. Apunta a Android 11+ y empaqueta
 el lector web local, incluyendo subida, pegado y cámara. El valor seguro para
 teléfonos es `PALETTE_8`; el decodificador sigue leyendo las paletas existentes.
+
+### Contrato encoder/decoder verificado
+
+- `ASCII_95` usa empaquetado base95 reversible y conserva codewords binarios
+  arbitrarios de Reed-Solomon a través de un PNG descargado.
+- El ECC máximo/predeterminado es 50% de paridad: 160 bytes de datos más 80
+  símbolos de paridad por bloque, corrigiendo hasta 40 símbolos dañados.
+- `npm test` cubre serialización y decodificación PNG real para las cinco
+  paletas y los tres modos de compresión.
+- Brotli sigue siendo la opción general de mayor densidad. Una paleta de 256
+  colores es más densa digitalmente, pero mucho menos confiable ante cambios
+  físicos de color.
+
+### Estado verificado
+
+La matriz PNG automatizada pasa 15/15 casos. Para captura con cámara móvil,
+`PALETTE_8` y `PALETTE_16` siguen siendo los modos recomendados.
 
 ---
 

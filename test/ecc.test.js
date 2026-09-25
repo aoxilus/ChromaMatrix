@@ -76,4 +76,20 @@ console.log('--- Running Reed-Solomon Tests ---');
   console.log(`✓ Test 3: Chunked RS decode with noise passed (${result.totalErrorsCorrected} errors corrected)`);
 }
 
+// Test 4: The default/max setting is a real 50% parity budget.
+{
+  const payload = new Uint8Array(160);
+  const blocks = encodePayloadRS(payload);
+  assert(blocks.length === 1, 'A 160-byte payload should fit in one RS block');
+  assert(blocks[0].dataLen === 160, 'The max RS data block should be 160 bytes');
+  assert(blocks[0].eccLen === 80, 'The default ECC should be 50% (80 parity bytes)');
+  assert(blocks[0].blockBytes.length <= 255, 'GF(256) codeword must stay within 255 symbols');
+  const corrupted = new Uint8Array(blocks[0].blockBytes);
+  for (let i = 0; i < 40; i++) corrupted[i] ^= 0xA5;
+  const recovered = rsDecodeBlock(corrupted, blocks[0].eccLen);
+  assert(recovered.success, '50% ECC should correct 40 corrupted symbols');
+  assert(recovered.correctedErrors === 40, '50% ECC should report all corrected symbols');
+  console.log('✓ Test 4: Default 50% ECC block sizing passed');
+}
+
 console.log('All Reed-Solomon tests passed successfully!');

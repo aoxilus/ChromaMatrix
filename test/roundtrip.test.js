@@ -3,9 +3,15 @@
  * Encode string -> Render RGBA buffer -> Decode -> Verify exact match
  */
 
-import { encodeChromaMatrix, matrixToRgbaBuffer } from '../src/core/encoder.js';
+import {
+  bytesToSymbols,
+  encodeChromaMatrix,
+  matrixToRgbaBuffer,
+  symbolsToBytes
+} from '../src/core/encoder.js';
 import { decodeChromaMatrix } from '../src/core/decoder.js';
 import { PALETTE_MODES } from '../src/core/palette.js';
+import { PNG } from 'pngjs';
 
 console.log('--- Running ChromaMatrix Roundtrip Tests ---');
 
@@ -85,6 +91,47 @@ console.log('--- Running ChromaMatrix Roundtrip Tests ---');
     throw new Error(`Text mismatch! Expected "${text}", got "${decoded.text}"`);
   }
   console.log('✓ Test 3: PALETTE_ASCII_95 roundtrip passed');
+}
+
+// Test 4: ASCII-95 must preserve arbitrary RS bytes through an actual PNG.
+{
+  const payload = Uint8Array.from({ length: 257 }, (_, i) => i & 0xFF);
+  console.log('[Test 4] Encoding arbitrary binary data with PALETTE_ASCII_95 through PNG');
+
+  const directSymbols = bytesToSymbols(payload, PALETTE_MODES.PALETTE_ASCII_95);
+  const directRoundtrip = symbolsToBytes(directSymbols, PALETTE_MODES.PALETTE_ASCII_95);
+  if (directRoundtrip.length !== payload.length ||
+      directRoundtrip.some((value, index) => value !== payload[index])) {
+    throw new Error('ASCII_95 direct binary symbol roundtrip failed');
+  }
+
+  const matrix = encodeChromaMatrix(payload, {
+    mode: PALETTE_MODES.PALETTE_ASCII_95,
+    eccRatio: 0.5
+  });
+  const rendered = matrixToRgbaBuffer(matrix, { cellSize: 16, margin: 2, dotShape: 'circle' });
+  const png = new PNG({ width: rendered.width, height: rendered.height });
+  png.data.set(rendered.data);
+  const pngBytes = PNG.sync.write(png);
+  const decodedPng = PNG.sync.read(pngBytes);
+  const decoded = decodeChromaMatrix({
+    width: decodedPng.width,
+    height: decodedPng.height,
+    data: decodedPng.data
+  });
+
+  if (!decoded.success) {
+    throw new Error(`ASCII_95 PNG decode failed: ${decoded.error}`);
+  }
+  if (decoded.data.length !== payload.length) {
+    throw new Error(`Binary length mismatch: expected ${payload.length}, got ${decoded.data.length}`);
+  }
+  for (let i = 0; i < payload.length; i++) {
+    if (decoded.data[i] !== payload[i]) {
+      throw new Error(`Binary mismatch at byte ${i}: expected ${payload[i]}, got ${decoded.data[i]}`);
+    }
+  }
+  console.log(`✓ Test 4: ASCII_95 binary-safe PNG roundtrip passed (${matrix.symbolCount} symbols)`);
 }
 
 console.log('All ChromaMatrix Roundtrip Tests passed successfully!');

@@ -7,6 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import { PNG } from 'pngjs';
+import { DEFAULT_ECC_RATIO } from '../core/reedsolomon.js';
 import { encodeChromaMatrix, matrixToSvg, matrixToRgbaBuffer } from '../core/encoder.js';
 import { PALETTE_MODES } from '../core/palette.js';
 
@@ -20,7 +21,7 @@ Options:
   -o, --output <file>        Output file (.png or .svg) (default: matrix.png)
   -m, --mode <mode>          Palette Mode (default: PALETTE_16)
                              Options: PALETTE_8, PALETTE_16, PALETTE_64, ASCII_95, PALETTE_256
-  -e, --ecc <ratio>          Reed-Solomon ECC ratio [0.1 to 0.5] (default: 0.25)
+  -e, --ecc <ratio>          Reed-Solomon ECC ratio [0.1 to 0.5] (default: 0.5)
   -s, --cell-size <px>       Cell size in pixels (default: 16)
   -d, --dot-shape <shape>    Dot shape: 'circle' | 'square' | 'rounded' (default: circle)
   -h, --help                 Show help
@@ -33,7 +34,7 @@ function parseArgs() {
     input: null,
     output: 'matrix.png',
     mode: PALETTE_MODES.PALETTE_16,
-    ecc: 0.25,
+    ecc: DEFAULT_ECC_RATIO,
     cellSize: 16,
     dotShape: 'circle'
   };
