@@ -4,6 +4,12 @@
 
 > **[Read in English 🇺🇸](README.md)** · **[Leer en Español 🇪🇸](README.es.md)**
 
+ChromaMatrix convierte texto y archivos en matrices de color imprimibles para
+archivarlos offline, escanearlos con cámara o scanner plano y recuperarlos con
+calibración, compresión y corrección de errores. Está diseñado para archivos
+de papel, experimentos de almacenamiento óptico y desarrolladores que buscan
+un formato local e inspeccionable.
+
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/Licencia-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Autor: aoxilus](https://img.shields.io/badge/Autor-aoxilus%20🥑-brightgreen.svg)](https://github.com/aoxilus)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-blue.svg)](https://nodejs.org)
@@ -21,13 +27,13 @@
    - `PALETTE_16` (4 bits = 1 nibble/punto, 2 puntos/byte): Densidad y estabilidad óptima.
    - `PALETTE_64` (6 bits/punto): Empaquetado Base64 directo.
    - `ASCII_95` (95 símbolos): Empaquetado base95 seguro para bytes arbitrarios.
-   - `PALETTE_256` (8 bits / 1 byte por punto): Máxima densidad física para escáneres.
+   - `PALETTE_256` (8 bits / 1 byte por punto): Máxima densidad digital; requiere captura calibrada.
 4. **Código de Corrección de Errores Reed-Solomon (RS-ECC)**: Aritmética completa en el Campo de Galois $GF(2^8)$ con algoritmo Berlekamp-Massey para recuperar datos dañados por manchas, arrugas o reflejos.
 5. **Laboratorio de Fidelidad de Impresora y Escáner**: Mide desviaciones de color ($\Delta E$), genera matrices de confusión y recomienda automáticamente la mejor paleta para tu hardware.
 6. **Arquitectura Cero Dependencias**: Ejecutable directamente en el navegador (HTML5 Canvas/Webcam) y en Node.js para CLI y servidor.
 7. **Interfaz Bilingüe (EN / ES)**: Soporte completo en inglés y español con selector de idioma en vivo.
 8. **Compresión del Payload**: Compresión opcional GZIP o Brotli antes de Reed-Solomon para reducir el tamaño de la matriz con decodificación automática.
-9. **Firma Binaria del Formato**: Una línea horizontal B/N reservada deletrea `ChromaMatrix` en binario ASCII antes de iniciar la decodificación cromática, para que una AI identifique el formato y encuentre su repositorio fuente.
+9. **Encabezado Binario del Formato**: La estructura existente de marcadores y encabezado comienza con `CM`, identificando ChromaMatrix sin reservar un segundo bloque dentro del payload.
 
 ---
 

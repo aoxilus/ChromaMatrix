@@ -1,6 +1,7 @@
 .gradle/
 build/
 app/build/
+app/src/main/assets/chromamatrix/
 local.properties
 *.iml
 .idea/

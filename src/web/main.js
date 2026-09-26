@@ -78,14 +78,11 @@ const DOM = {
   inputText: document.getElementById('input-text'),
   btnUploadFileEncoder: document.getElementById('btn-upload-file-encoder'),
   fileInputEncoder: document.getElementById('file-input-encoder'),
-  paletteMode: document.getElementById('palette-mode'),
   eccLevel: document.getElementById('ecc-level'),
   compressionMode: document.getElementById('compression-mode'),
   dotShape: document.getElementById('dot-shape'),
   cellSize: document.getElementById('cell-size'),
   cellSizeVal: document.getElementById('cell-size-val'),
-  previewSize: document.getElementById('preview-size'),
-  previewSizeVal: document.getElementById('preview-size-val'),
   studioPaletteBar: document.getElementById('studio-palette-bar'),
   matrixPreviewStage: document.getElementById('matrix-canvas-wrapper'),
   btnDownloadPng: document.getElementById('btn-download-png'),
@@ -159,6 +156,21 @@ const DOM = {
   // Theory
   theoryPaletteExplorer: document.getElementById('theory-palette-explorer')
 };
+
+const PRESET_PALETTE_MODES = Object.freeze({
+  maximum: PALETTE_MODES.PALETTE_256,
+  dense: PALETTE_MODES.PALETTE_64,
+  balanced: PALETTE_MODES.PALETTE_16,
+  text: PALETTE_MODES.PALETTE_ASCII_95,
+  photo: PALETTE_MODES.PALETTE_16,
+  phone: PALETTE_MODES.PALETTE_8,
+  sticker: PALETTE_MODES.PALETTE_8,
+  'preset-custom': PALETTE_MODES.PALETTE_16
+});
+
+function getSelectedPaletteMode() {
+  return PRESET_PALETTE_MODES[DOM.presetSelector.value] || PALETTE_MODES.PALETTE_16;
+}
 
 // ==========================================
 // 1. Initialization & Navigation
@@ -258,61 +270,54 @@ function initTabs() {
 // ==========================================
 // 2. Matrix Studio (Encoder) Controller
 // ==========================================
+function applyEncodingPreset(val = DOM.presetSelector.value) {
+  // Maximum density
+  if (val === 'maximum') {
+    DOM.eccLevel.value = '0.50';
+    DOM.dotShape.value = 'square';
+    DOM.cellSize.value = '14';
+    DOM.cellSizeVal.textContent = '14 px';
+  } else if (val === 'dense') {
+    DOM.eccLevel.value = '0.15';
+    DOM.dotShape.value = 'rounded';
+    DOM.cellSize.value = '16';
+    DOM.cellSizeVal.textContent = '16 px';
+  } else if (val === 'balanced') {
+    DOM.eccLevel.value = '0.25';
+    DOM.dotShape.value = 'circle';
+    DOM.cellSize.value = '18';
+    DOM.cellSizeVal.textContent = '18 px';
+  } else if (val === 'text') {
+    DOM.eccLevel.value = '0.15';
+    DOM.dotShape.value = 'rounded';
+    DOM.cellSize.value = '16';
+    DOM.cellSizeVal.textContent = '16 px';
+  // Paper presets
+  } else if (val === 'photo') {
+    DOM.eccLevel.value = '0.25';
+    DOM.dotShape.value = 'circle';
+    DOM.cellSize.value = '18';
+    DOM.cellSizeVal.textContent = '18 px';
+  } else if (val === 'phone') {
+    DOM.eccLevel.value = '0.35';
+    DOM.dotShape.value = 'circle';
+    DOM.cellSize.value = '22';
+    DOM.cellSizeVal.textContent = '22 px';
+  } else if (val === 'sticker') {
+    DOM.eccLevel.value = '0.35';
+    DOM.dotShape.value = 'circle';
+    DOM.cellSize.value = '20';
+    DOM.cellSizeVal.textContent = '20 px';
+  }
+
+  renderStudioPaletteBar();
+}
+
 function initStudio() {
   DOM.inputText.addEventListener('input', () => renderStudioMatrix());
 
   DOM.presetSelector.addEventListener('change', (e) => {
-    const val = e.target.value;
-
-    // Maximum density
-    if (val === 'maximum') {
-      DOM.paletteMode.value = PALETTE_MODES.PALETTE_256;
-      DOM.eccLevel.value = '0.50';
-      DOM.dotShape.value = 'square';
-      DOM.cellSize.value = '14';
-      DOM.cellSizeVal.textContent = '14 px';
-    } else if (val === 'dense') {
-      DOM.paletteMode.value = PALETTE_MODES.PALETTE_64;
-      DOM.eccLevel.value = '0.15';
-      DOM.dotShape.value = 'rounded';
-      DOM.cellSize.value = '16';
-      DOM.cellSizeVal.textContent = '16 px';
-    } else if (val === 'balanced') {
-      DOM.paletteMode.value = PALETTE_MODES.PALETTE_16;
-      DOM.eccLevel.value = '0.25';
-      DOM.dotShape.value = 'circle';
-      DOM.cellSize.value = '18';
-      DOM.cellSizeVal.textContent = '18 px';
-    } else if (val === 'text') {
-      DOM.paletteMode.value = PALETTE_MODES.PALETTE_ASCII_95;
-      DOM.eccLevel.value = '0.15';
-      DOM.dotShape.value = 'rounded';
-      DOM.cellSize.value = '16';
-      DOM.cellSizeVal.textContent = '16 px';
-
-    // Paper presets
-    } else if (val === 'photo') {
-      DOM.paletteMode.value = PALETTE_MODES.PALETTE_16;
-      DOM.eccLevel.value = '0.25';
-      DOM.dotShape.value = 'circle';
-      DOM.cellSize.value = '18';
-      DOM.cellSizeVal.textContent = '18 px';
-    } else if (val === 'phone') {
-      DOM.paletteMode.value = PALETTE_MODES.PALETTE_8;
-      DOM.eccLevel.value = '0.35';
-      DOM.dotShape.value = 'circle';
-      DOM.cellSize.value = '22';
-      DOM.cellSizeVal.textContent = '22 px';
-    } else if (val === 'sticker') {
-      DOM.paletteMode.value = PALETTE_MODES.PALETTE_8;
-      DOM.eccLevel.value = '0.35';
-      DOM.dotShape.value = 'circle';
-      DOM.cellSize.value = '20';
-      DOM.cellSizeVal.textContent = '20 px';
-
-    }
-
-    renderStudioPaletteBar();
+    applyEncodingPreset(e.target.value);
     renderStudioMatrix();
   });
 
@@ -329,10 +334,6 @@ function initStudio() {
     }
   });
 
-  DOM.paletteMode.addEventListener('change', () => {
-    renderStudioPaletteBar();
-    renderStudioMatrix();
-  });
   DOM.eccLevel.addEventListener('change', () => renderStudioMatrix());
   DOM.compressionMode.addEventListener('change', () => renderStudioMatrix());
   DOM.dotShape.addEventListener('change', () => renderStudioMatrix());
@@ -341,29 +342,18 @@ function initStudio() {
     DOM.cellSizeVal.textContent = `${e.target.value} px`;
     renderStudioMatrix();
   });
-  DOM.previewSize.addEventListener('input', (e) => {
-    DOM.previewSizeVal.textContent = `${e.target.value} px`;
-    applyPreviewSize();
-  });
-
   DOM.btnDownloadPng.addEventListener('click', downloadMatrixPng);
   DOM.btnDownloadSvg.addEventListener('click', downloadMatrixSvg);
   DOM.btnOpenNewTab.addEventListener('click', openMatrixInNewTab);
   DOM.btnCopyImage.addEventListener('click', copyMatrixImageToClipboard);
   DOM.btnPrintSheet.addEventListener('click', () => window.print());
 
-  applyPreviewSize();
-  renderStudioPaletteBar();
-}
-
-function applyPreviewSize() {
-  if (!DOM.matrixPreviewStage || !DOM.previewSize) return;
-  DOM.matrixPreviewStage.style.width = `${DOM.previewSize.value}px`;
-  DOM.matrixPreviewStage.style.maxWidth = '100%';
+  // Apply the selected profile on first load, not only after user interaction.
+  applyEncodingPreset();
 }
 
 function renderStudioPaletteBar() {
-  const mode = DOM.paletteMode.value;
+  const mode = getSelectedPaletteMode();
   const palette = getPalette(mode);
   DOM.studioPaletteBar.innerHTML = '';
 
@@ -380,7 +370,7 @@ function renderStudioPaletteBar() {
 async function renderStudioMatrix() {
   const renderSerial = ++state.encoder.renderSerial;
   const text = DOM.inputText.value || ' ';
-  const mode = DOM.paletteMode.value;
+  const mode = getSelectedPaletteMode();
   const eccRatio = parseFloat(DOM.eccLevel.value);
   const cellSize = parseInt(DOM.cellSize.value, 10);
   const dotShape = DOM.dotShape.value;
@@ -392,7 +382,7 @@ async function renderStudioMatrix() {
     if (renderSerial !== state.encoder.renderSerial) return;
     state.encoder.currentMatrix = matrix;
 
-    DOM.statGridSize.textContent = `${matrix.gridSize} x ${matrix.gridSize}`;
+    DOM.statGridSize.textContent = `${matrix.gridSize} × ${matrix.gridSize}`;
     DOM.statPayloadLen.textContent = matrix.compression === 'none'
       ? `${matrix.rawByteLength} B`
       : `${matrix.rawByteLength} B / ${matrix.originalByteLength} B`;
@@ -401,7 +391,6 @@ async function renderStudioMatrix() {
 
     const svgString = matrixToSvg(matrix, { cellSize, dotShape, margin: 2 });
     DOM.matrixPreviewStage.innerHTML = svgString;
-    applyPreviewSize();
 
     attachSvgDotEvents(matrix, cellSize);
   } catch (err) {
@@ -821,7 +810,7 @@ async function runDecoder() {
     DOM.resultStatusBadge.className = 'result-status success';
     DOM.resultStatusBadge.querySelector('.status-text').textContent = 'Matrix Decoded Instantly (100% Restored)';
 
-    DOM.decStatGrid.textContent = `${result.gridSize} x ${result.gridSize}`;
+    DOM.decStatGrid.textContent = `${result.gridSize} × ${result.gridSize}`;
     DOM.decStatMode.textContent = result.mode;
     DOM.decStatEcc.textContent = `${result.correctedErrors} bytes`;
     DOM.decStatDeltaE.textContent = `${result.avgDeltaE.toFixed(2)} ΔE`;

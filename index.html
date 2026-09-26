@@ -75,12 +75,12 @@
 
             <!-- Medium Presets -->
             <div class="form-group">
-              <label for="preset-selector" data-i18n="studio.preset.label">Encoding preset</label>
+              <label for="preset-selector" data-i18n="studio.preset.label">Encoding profile (palette + ECC)</label>
               <select id="preset-selector" style="font-weight: 600; color: var(--accent-cyan);">
                 <optgroup label="Digital">
-                  <option value="maximum">Maximum · 256 colors · 8 bits/dot</option>
+                  <option value="maximum" selected>Maximum · 256 colors · 8 bits/dot</option>
                   <option value="dense">Dense · 64 colors · 6 bits/dot</option>
-                  <option value="balanced" selected>Balanced · 16 colors · 4 bits/dot</option>
+                  <option value="balanced">Balanced · 16 colors · 4 bits/dot</option>
                   <option value="text">Text · ASCII-95 · binary-safe base95</option>
                 </optgroup>
                 <optgroup label="Paper">
@@ -105,17 +105,6 @@
             </div>
 
             <div class="form-row">
-              <div class="form-group flex-1">
-                <label for="palette-mode" data-i18n="studio.palette.label">Color Palette Mode</label>
-                <select id="palette-mode">
-                  <option value="PALETTE_16" data-i18n="opt.palette16">16 colors · 4 bits/dot</option>
-                  <option value="PALETTE_8" data-i18n="opt.palette8" selected>8 colors · 3 bits/dot · separated spectra</option>
-                  <option value="ASCII_95" data-i18n="opt.ascii95">ASCII-95 · binary-safe base95</option>
-                  <option value="PALETTE_64" data-i18n="opt.palette64">64 colors · 6 bits/dot</option>
-                  <option value="PALETTE_256" data-i18n="opt.palette256">256 colors · 8 bits/dot</option>
-                </select>
-              </div>
-
               <div class="form-group flex-1">
                 <label for="ecc-level" data-i18n="studio.ecc.label">Error correction</label>
                 <select id="ecc-level">
@@ -153,12 +142,6 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="preview-size" data-i18n="studio.previewSize.label">On-screen matrix size</label>
-              <input type="range" id="preview-size" min="160" max="900" value="620">
-              <span class="range-val" id="preview-size-val">620 px</span>
-            </div>
-
             <!-- Active Palette Swatches Preview -->
             <div class="form-group">
               <label data-i18n="studio.swatches.label">Calibration palette</label>
@@ -168,8 +151,8 @@
             <!-- Statistics Box -->
             <div class="stats-grid">
               <div class="stat-item">
-                <span class="stat-label" data-i18n="stat.gridSize">Grid</span>
-                <span class="stat-val" id="stat-grid-size">29 x 29</span>
+                <span class="stat-label" data-i18n="stat.gridSize">Matrix size (W × H)</span>
+                <span class="stat-val" id="stat-grid-size">25 × 25</span>
               </div>
               <div class="stat-item">
                 <span class="stat-label" data-i18n="stat.payloadLen">Payload</span>

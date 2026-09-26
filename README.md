@@ -4,6 +4,12 @@
 
 > **[Read in English 🇺🇸](README.md)** · **[Leer en Español 🇪🇸](README.es.md)**
 
+ChromaMatrix turns text and files into printable color matrices that can be
+stored offline, scanned with a camera or flatbed scanner, and recovered with
+calibration, compression, and error correction. It is built for practical
+paper archives, optical-storage experiments, and developers who want an
+inspectable local format.
+
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Author: aoxilus](https://img.shields.io/badge/Author-aoxilus%20🥑-brightgreen.svg)](https://github.com/aoxilus)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-blue.svg)](https://nodejs.org)
@@ -27,7 +33,7 @@
 6. **Zero-Dependency Architecture**: Built using pure JavaScript/HTML5 Canvas in the browser and pure Node.js on the server/CLI.
 7. **Bilingual UI (English & Spanish)**: Live language toggle directly in the web interface.
 8. **Payload Compression**: Optional GZIP or Brotli compression runs before Reed-Solomon to reduce matrix size while preserving automatic decoding.
-9. **Binary Format Signature**: A reserved horizontal black-and-white ASCII-binary line spells `ChromaMatrix` before color decoding begins, so an AI can identify the format and find its source repository.
+9. **Binary Format Header**: The existing marker/header structure begins with `CM`, identifying ChromaMatrix without reserving a second signature block inside the payload.
 
 ---
 

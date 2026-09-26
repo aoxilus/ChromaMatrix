@@ -256,6 +256,7 @@ html[data-theme="light"] .brand-text h1 {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   gap: 24px;
+  min-width: 0;
 }
 
 @media (max-width: 1024px) {
@@ -267,6 +268,7 @@ html[data-theme="light"] .brand-text h1 {
 /* Card Component */
 .card {
   background: var(--bg-card);
+  min-width: 0;
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -542,7 +544,11 @@ input:checked + .slider:before {
   background: #1E293B;
   border-radius: var(--radius-md);
   padding: 24px;
-  min-height: 420px;
+  height: clamp(320px, 65vh, 720px);
+  min-height: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   overflow: auto;
   border: 1px solid var(--border-color);
 }
@@ -552,15 +558,29 @@ input:checked + .slider:before {
   padding: 12px;
   border-radius: var(--radius-sm);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  height: fit-content;
+  max-width: 100%;
+  max-height: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  flex: 0 1 auto;
+  margin: 0;
   aspect-ratio: 1 / 1;
 }
 
 .matrix-canvas-wrapper svg {
   display: block;
-  max-width: 100%;
+  width: auto;
   aspect-ratio: 1 / 1;
   height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 /* Dot Inspector */
@@ -1099,7 +1119,10 @@ html[data-theme="light"] .sample-loaders span {
   .preview-stage {
     background: transparent;
     padding: 0;
+    height: auto;
     min-height: auto;
+    max-height: none;
+    overflow: visible;
   }
   .matrix-canvas-wrapper {
     box-shadow: none;

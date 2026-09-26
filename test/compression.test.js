@@ -11,23 +11,11 @@ import {
 import { encodeChromaMatrixAsync, matrixToRgbaBuffer } from '../src/core/encoder.js';
 import { decodeChromaMatrixAsync } from '../src/core/decoder.js';
 import { PALETTE_MODES } from '../src/core/palette.js';
-import {
-  createBinaryLocator,
-  decodeBinaryLocator,
-  BINARY_LOCATOR_TEXT
-} from '../src/core/binary-locator.js';
 
 console.log('--- Running Compression Tests ---');
 
 const text = 'ChromaMatrix compression test '.repeat(80);
 const input = new TextEncoder().encode(text);
-
-const binaryLocator = createBinaryLocator();
-const locatorInfo = decodeBinaryLocator(binaryLocator.payload);
-if (locatorInfo !== BINARY_LOCATOR_TEXT || binaryLocator.footprint !== BINARY_LOCATOR_TEXT.length * 8) {
-  throw new Error('Binary ChromaMatrix locator configuration is invalid');
-}
-console.log(`✓ Horizontal binary ChromaMatrix locator generated (${binaryLocator.footprint} bits)`);
 
 for (const mode of [COMPRESSION_MODES.GZIP, COMPRESSION_MODES.BROTLI]) {
   const compressed = await compressBytes(input, mode);
@@ -49,6 +37,33 @@ if (defaultMatrix.compression !== COMPRESSION_MODES.BROTLI) {
   throw new Error('Brotli is not the default compression mode');
 }
 console.log('✓ Brotli is the default async encoder compression');
+
+const previewText = (
+  'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ' +
+  'Curabitur eget leo id eros sodales dictum. '
+).repeat(20).slice(0, 1000);
+const naturalPreview = await encodeChromaMatrixAsync(previewText, {
+  mode: PALETTE_MODES.PALETTE_8,
+  eccRatio: 0.5,
+  compression: COMPRESSION_MODES.NONE
+});
+const brotliPreview = await encodeChromaMatrixAsync(previewText, {
+  mode: PALETTE_MODES.PALETTE_8,
+  eccRatio: 0.5,
+  compression: COMPRESSION_MODES.BROTLI
+});
+if (brotliPreview.rawByteLength >= naturalPreview.rawByteLength ||
+    brotliPreview.gridSize >= naturalPreview.gridSize) {
+  throw new Error(
+    `Brotli preview was not smaller: ${naturalPreview.gridSize}x${naturalPreview.gridSize} vs ` +
+    `${brotliPreview.gridSize}x${brotliPreview.gridSize}`
+  );
+}
+console.log(
+  `✓ Preview shrinks for the same 1000-character lorem payload: ` +
+  `${naturalPreview.gridSize}x${naturalPreview.gridSize} -> ` +
+  `${brotliPreview.gridSize}x${brotliPreview.gridSize}`
+);
 
 for (const mode of [COMPRESSION_MODES.GZIP, COMPRESSION_MODES.BROTLI]) {
   const matrix = await encodeChromaMatrixAsync(text, {

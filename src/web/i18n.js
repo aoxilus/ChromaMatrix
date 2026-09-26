@@ -21,7 +21,7 @@ export const translations = {
     // Studio Tab
     'studio.header.title': 'Encode a color matrix',
     'studio.header.subtitle': 'Turn data into color dots for digital or paper output.',
-    'studio.preset.label': 'Encoding preset',
+    'studio.preset.label': 'Encoding profile (palette + ECC)',
     'preset.custom': '⚙️ Custom configuration',
     // Legacy fallbacks
     'preset.sticker': '🏷️ Outdoor UV sticker (35% ECC)',
@@ -54,7 +54,7 @@ export const translations = {
     'studio.size.label': 'Dot size (px)',
     'studio.previewSize.label': 'On-screen matrix size',
     'studio.swatches.label': 'Calibration palette',
-    'stat.gridSize': 'Grid',
+    'stat.gridSize': 'Matrix size (W × H)',
     'stat.payloadLen': 'Payload',
     'stat.codewordLen': 'ECC bytes',
     'stat.dotCount': 'Symbols',
@@ -191,7 +191,7 @@ export const translations = {
     // Studio Tab
     'studio.header.title': 'Codificar una matriz de color',
     'studio.header.subtitle': 'Convierte datos en puntos de color para salida digital o papel.',
-    'studio.preset.label': 'Perfil de codificación',
+    'studio.preset.label': 'Perfil (paleta + ECC)',
     'preset.custom': '⚙️ Configuración personalizada',
     // Legacy fallbacks
     'preset.sticker': '🏷️ Sticker UV (35% ECC)',
@@ -224,7 +224,7 @@ export const translations = {
     'studio.size.label': 'Tamaño del punto (px)',
     'studio.previewSize.label': 'Tamaño de matriz en pantalla',
     'studio.swatches.label': 'Paleta de calibración',
-    'stat.gridSize': 'Matriz',
+    'stat.gridSize': 'Tamaño de matriz (ancho × alto)',
     'stat.payloadLen': 'Carga',
     'stat.codewordLen': 'Bytes ECC',
     'stat.dotCount': 'Símbolos',

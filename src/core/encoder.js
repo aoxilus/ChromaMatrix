@@ -15,12 +15,6 @@ import {
   compressionModeFromId,
   compressBytes
 } from './compression.js';
-import {
-  createBinaryLocator,
-  getBinaryLocatorCell,
-  isBinaryLocatorCell
-} from './binary-locator.js';
-const BINARY_LOCATOR = createBinaryLocator();
 
 // Reserved color definitions
 export const COLOR_RESERVED_BLACK = '#000000';
@@ -34,8 +28,7 @@ export const CELL_TYPES = {
   TIMING: 2,
   CALIBRATION: 3,
   HEADER: 4,
-  DATA: 5,
-  BINARY_LOCATOR: 6
+  DATA: 5
 };
 
 /**
@@ -123,8 +116,6 @@ export function getCalibrationCoordinates(gridSize, count) {
  * Check if a cell coordinate is reserved for finders, timing, calibration, or header
  */
 export function isCellReserved(gx, gy, gridSize, calibCount) {
-  if (isBinaryLocatorCell(gx, gy, gridSize, BINARY_LOCATOR)) return true;
-
   // Finder patterns (4 corners 7x7)
   if ((gx < 7 && gy < 7) ||
       (gx >= gridSize - 7 && gy < 7) ||
@@ -344,8 +335,7 @@ export function symbolsToBytes(symbols, mode, expectedByteLength) {
  * Calculate required matrix grid dimension (W x W) to hold payload + header + markers
  */
 export function calculateRequiredGridSize(symbolCount, paletteColorCount) {
-  const locatorMinimum = 8 + BINARY_LOCATOR.footprint;
-  let size = Math.max(25, locatorMinimum + 8);
+  let size = 25;
   if (size % 2 === 0) size++;
   while (true) {
     let availableDataCells = 0;
@@ -478,20 +468,6 @@ export function encodeChromaMatrix(dataInput, options = {}) {
       color: calibColors[i].hex,
       calibIndex: calibColors[i].index
     };
-  }
-
-  // Horizontal binary ChromaMatrix signature next to the top-left finder.
-  const locatorFootprint = BINARY_LOCATOR.footprint;
-  for (let gx = 0; gx < locatorFootprint; gx++) {
-    const x = 8 + gx;
-    const y = 8;
-    if (x < gridSize) {
-      grid[y][x] = {
-        type: CELL_TYPES.BINARY_LOCATOR,
-        color: getBinaryLocatorCell(x, y, BINARY_LOCATOR) ? COLOR_RESERVED_BLACK : COLOR_RESERVED_WHITE,
-        locatorText: BINARY_LOCATOR.text
-      };
-    }
   }
 
   // Header
@@ -628,7 +604,7 @@ export function matrixToSvg(matrixModel, options = {}) {
       const px = (x + margin) * cellSize;
       const py = (y + margin) * cellSize;
 
-      if (cell.type === CELL_TYPES.FINDER || cell.type === CELL_TYPES.TIMING || cell.type === CELL_TYPES.BINARY_LOCATOR) {
+      if (cell.type === CELL_TYPES.FINDER || cell.type === CELL_TYPES.TIMING) {
         svg += `  <rect x="${px}" y="${py}" width="${cellSize}" height="${cellSize}" fill="${cell.color}"/>\n`;
       } else {
         const radius = (cellSize * dotScale) / 2;
@@ -694,7 +670,7 @@ export function matrixToRgbaBuffer(matrixModel, options = {}) {
           if (imgX >= width || imgY >= height) continue;
 
           let fill = false;
-          if (cell.type === CELL_TYPES.FINDER || cell.type === CELL_TYPES.TIMING || cell.type === CELL_TYPES.BINARY_LOCATOR) {
+          if (cell.type === CELL_TYPES.FINDER || cell.type === CELL_TYPES.TIMING) {
             fill = true;
           } else if (dotShape === 'circle') {
             const dx = (imgX + 0.5) - cx;
